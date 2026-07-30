@@ -1,4 +1,7 @@
 param(
+    [ValidateSet("bbk9288", "bbk9288s")]
+    [string]$Machine = "bbk9288s",
+
     [ValidateRange(1, 65535)]
     [int]$HttpPort = 8000,
 
@@ -8,7 +11,9 @@ param(
     [ValidateRange(1, 65535)]
     [int]$QmpPort = 6082,
 
-    [string]$RuntimeDir
+    [string]$RuntimeDir,
+
+    [string]$Nand
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,34 +21,69 @@ $ErrorActionPreference = "Stop"
 $env:PYTHONUTF8 = "1"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runtimeBin = "C:\msys64\ucrt64\bin"
-$packagedQemu = Join-Path $root "qemu-system-s1c33.exe"
-$sourceQemu = Join-Path $root "build\qemu-system-s1c33.exe"
-$releaseQemu = Join-Path $root "_build\qemu-system-s1c33.exe"
-$qemu = if (Test-Path -LiteralPath $packagedQemu) {
-    $packagedQemu
-} elseif (Test-Path -LiteralPath $sourceQemu) {
-    $sourceQemu
+$qemuCandidates = if ($Machine -eq "bbk9288") {
+    @(
+        (Join-Path $root "bbk9288.exe"),
+        (Join-Path $root "qemu-system-s1c33.exe"),
+        (Join-Path $root "build\qemu-system-s1c33.exe"),
+        (Join-Path $root "_build\qemu-system-s1c33.exe")
+    )
 } else {
-    $releaseQemu
+    @(
+        (Join-Path $root "qemu-system-s1c33.exe"),
+        (Join-Path $root "build\qemu-system-s1c33.exe"),
+        (Join-Path $root "_build\qemu-system-s1c33.exe")
+    )
+}
+$qemu = $qemuCandidates |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -First 1
+if ([string]::IsNullOrWhiteSpace($qemu)) {
+    throw "找不到 S1C33 QEMU 可执行文件。"
 }
 if (-not $RuntimeDir) {
-    $RuntimeDir = if (Test-Path -LiteralPath $packagedQemu) {
-        Join-Path $root "runtime"
-    } elseif ($env:BBK9288S_RUNTIME_DIR) {
-        $env:BBK9288S_RUNTIME_DIR
+    $runtimeEnvironment = if ($Machine -eq "bbk9288") {
+        $env:BBK9288_RUNTIME_DIR
     } else {
+        $env:BBK9288S_RUNTIME_DIR
+    }
+    $RuntimeDir = if ($runtimeEnvironment) {
+        $runtimeEnvironment
+    } elseif (
+        $Machine -eq "bbk9288s" -and
+        -not (Test-Path -LiteralPath (Join-Path $root "qemu-system-s1c33.exe"))
+    ) {
         Join-Path (Split-Path -Parent $root) "eebbk9288s-runtime"
+    } else {
+        Join-Path $root "runtime"
     }
 }
 $RuntimeDir = [System.IO.Path]::GetFullPath($RuntimeDir)
-$userNand = Join-Path $RuntimeDir "nand-user.raw"
+if (-not $Nand) {
+    $nandCandidates = @(
+        (Join-Path $RuntimeDir "nand-user.raw"),
+        (Join-Path $root "nand-user.raw")
+    )
+    if ($Machine -eq "bbk9288") {
+        $nandCandidates += Join-Path (
+            Split-Path -Parent $root
+        ) "BBK9288模拟器\nand-user.raw"
+    }
+    $Nand = $nandCandidates |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        Select-Object -First 1
+}
+if ([string]::IsNullOrWhiteSpace($Nand)) {
+    throw "找不到 NAND 镜像；请用 -Nand 指定 nand-user.raw。"
+}
+$Nand = [System.IO.Path]::GetFullPath($Nand)
 $nandTool = Join-Path $root "scripts\bbk9288s_nand_image.py"
 $webServer = Join-Path $root "scripts\bbk9288s_web_server.py"
 $webRoot = Join-Path $root "web"
 $webDist = Join-Path $webRoot "dist"
 $python = (Get-Command python -ErrorAction Stop).Source
 
-foreach ($path in @($qemu, $userNand, $nandTool, $webServer)) {
+foreach ($path in @($qemu, $Nand, $nandTool, $webServer)) {
     if (-not (Test-Path -LiteralPath $path)) {
         throw "Required emulator file is missing: $path"
     }
@@ -89,10 +129,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $webDist "index.html"))) {
 }
 
 $query = if ($WebSocketPort -eq 6081) { "" } else { "?wsPort=$WebSocketPort" }
+$modelName = if ($Machine -eq "bbk9288") { "BBK 9288" } else { "BBK 9288S" }
 Write-Host ""
-Write-Host "BBK 9288S Web is running:"
+Write-Host "$modelName Web is running:"
 Write-Host "  Local: http://127.0.0.1:$HttpPort/$query"
-Write-Host "  Data:  $RuntimeDir"
+Write-Host "  NAND:  $Nand"
 $addresses = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object {
         $_.IPAddress -notlike "127.*" -and
@@ -109,9 +150,10 @@ Push-Location $root
 try {
     & $python $webServer `
         --root $root `
+        --machine $Machine `
         --runtime-dir $RuntimeDir `
         --qemu $qemu `
-        --nand $userNand `
+        --nand $Nand `
         --dist $webDist `
         --http-port $HttpPort `
         --websocket-port $WebSocketPort `

@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-machine="bbk9288">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f4f5f6" />
-    <title>BBK 9288S Emulator</title>
+    <title>BBK 9288 Web Emulator</title>
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <div class="identity">
-          <span class="model-mark">9288S</span>
+          <span class="model-mark" id="model-mark">9288</span>
           <div>
-            <h1>BBK 9288S</h1>
+            <h1 id="model-title">BBK 9288</h1>
             <p>QEMU hardware emulator</p>
           </div>
         </div>
@@ -49,14 +49,14 @@
       </nav>
 
       <main class="workspace" id="emulator-view" data-view-panel="emulator">
-        <section class="display-column" aria-label="9288S 显示屏">
+        <section class="display-column" id="display-column" aria-label="9288 显示屏">
           <div class="device-frame" id="device-frame">
             <div class="device-label">
               <span>BBK</span>
-              <span>16 GRAY LCD</span>
+              <span id="display-label">320 × 240 LCD</span>
             </div>
             <div class="screen-bezel">
-              <div id="screen" tabindex="0" aria-label="模拟器触摸屏">
+              <div id="screen" tabindex="0" aria-label="模拟器显示屏">
                 <div class="screen-state" id="screen-state">连接模拟器</div>
                 <div class="touch-layer" id="touch-layer" aria-hidden="true"></div>
               </div>
@@ -64,7 +64,7 @@
           </div>
         </section>
 
-        <aside class="controls" aria-label="设备按键">
+        <aside class="controls controls-9288s" aria-label="9288S 设备按键">
           <div class="control-heading">
             <span>DEVICE KEYS</span>
             <span class="key-line">K5 / P0</span>
@@ -113,11 +113,24 @@
           </div>
 
           <div class="hardware-state">
-            <div><span>Display</span><strong>160 x 240</strong></div>
+            <div><span>Display</span><strong id="display-size">160 x 240</strong></div>
             <div><span>Depth</span><strong>2 / 4 bpp</strong></div>
-            <div><span>Input</span><strong>Touch + keys</strong></div>
+            <div><span>Input</span><strong id="input-type">Touch + keys</strong></div>
           </div>
         </aside>
+
+        <section class="keyboard-9288" id="keyboard-9288" aria-label="BBK 9288 原机 53 键键盘">
+          <header class="keyboard-heading">
+            <div>
+              <strong>BBK 9288 原机键盘</strong>
+              <span>8 × 7 MATRIX · 53 KEYS</span>
+            </div>
+            <output id="keyboard-state">点击按键或直接使用电脑键盘</output>
+          </header>
+          <div class="keyboard-scroll">
+            <div class="keyboard-deck" id="keyboard-deck"></div>
+          </div>
+        </section>
       </main>
 
       <main class="file-view" id="files-view" data-view-panel="files" hidden>
@@ -215,7 +228,7 @@
             <div class="setting-row">
               <span class="setting-label">
                 <strong>USB 连接</strong>
-                <small>模拟 9288S 的 USB 供电检测</small>
+                <small id="usb-description">模拟设备的 USB 供电检测</small>
               </span>
               <div class="setting-control">
                 <output id="usb-state" for="usb-connected">已连接</output>
@@ -228,7 +241,18 @@
             </div>
           </section>
 
-          <section class="settings-section" aria-labelledby="keymap-settings-title">
+          <section class="settings-section controls-9288" aria-labelledby="matrix-settings-title">
+            <div class="settings-section-heading">
+              <i data-lucide="keyboard"></i>
+              <h3 id="matrix-settings-title">9288 键盘矩阵</h3>
+            </div>
+            <p class="settings-note">
+              Web 面板提供完整 53 键布局。电脑上的数字、字母、Shift、功能键、
+              翻页键、方向键、Enter、Delete、Space 和 Esc 会直接进入原机矩阵。
+            </p>
+          </section>
+
+          <section class="settings-section controls-9288s" aria-labelledby="keymap-settings-title">
             <div class="settings-section-heading">
               <i data-lucide="keyboard"></i>
               <h3 id="keymap-settings-title">按键映射</h3>

@@ -31,6 +31,8 @@
 - S1C33 的 `INT`、`RETD`、`BRK`、`MIRROR` 和 `MAC` 指令。
 - VS1003 压缩音频数据通路；Windows 包通过 `ffplay.exe` 直接播放原固件
   从 NAND 读取并送往解码器的声音。
+- Web 控制台：noVNC 320 × 240 显示、完整 53 键面板、浏览器音频、
+  电源控制和 NAND 文件管理。
 - Windows SDL 桌面窗口、可点击的 53 键软键盘及一键启动脚本。
 
 当前固件可进入 V1.5 词典桌面，显示词典、翻译、语法、阅读、作文等应用
@@ -62,6 +64,46 @@ PageUp/PageDown 和方向键也会走同一套原机矩阵。软键盘的 `Shift
 启动器会优先使用同目录或 `PATH` 中的 `ffplay.exe` 播放声音，也可通过
 `-AudioPlayer <路径>` 指定，或用 `-NoAudio` 禁用。`ffplay` 本身不随源码
 仓库分发。
+
+## Web 前端
+
+安装 NAND 文件管理依赖和 Web 依赖：
+
+```powershell
+python -m pip install -r .\requirements-bbk9288s.txt
+Push-Location .\web
+npm ci
+Pop-Location
+```
+
+启动 9288 Web 控制台：
+
+```powershell
+.\run-bbk9288-web.ps1 -Nand .\runtime\nand-user.raw
+```
+
+也可以双击 `run-bbk9288-web.cmd`。默认页面为
+`http://127.0.0.1:8000/`，启动器会同时输出可供同一局域网手机或电脑访问
+的地址。Web 前端包括：
+
+- 320 × 240 横屏 noVNC 显示，支持像素级缩放和全屏。
+- 与原机布局一致的 53 键面板；电脑键盘也可直接输入。
+- 固件 VS1003 压缩音频流的浏览器播放和音量控制。
+- 模拟器启动、重启、连接状态和 USB 供电状态。
+- NAND 维护模式、目录浏览、上传、下载、重命名和删除。
+
+端口可按需调整：
+
+```powershell
+.\run-bbk9288-web.ps1 `
+  -Nand .\runtime\nand-user.raw `
+  -HttpPort 8080 `
+  -WebSocketPort 6082 `
+  -QmpPort 6083
+```
+
+WebSocket 和 HTTP 文件管理接口默认没有认证或传输加密，只应在可信局域网
+使用。QMP 始终只监听本机。
 
 ## 构建
 
@@ -143,6 +185,8 @@ python .\scripts\bbk9288_probe.py `
 - `scripts/bbk9288-softkeyboard.ps1`：Windows 53 键软键盘。
 - `scripts/bbk9288_probe.py`、`scripts/test-bbk9288.py`：短时探针和端到端
   回归测试。
+- `web/`、`scripts/bbk9288s_web_server.py`：9288/9288S 双机型 Web
+  控制台、QEMU 生命周期、浏览器音频和 NAND 管理 API。
 
 ## 资料依据
 

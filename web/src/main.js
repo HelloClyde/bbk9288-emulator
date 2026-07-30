@@ -84,6 +84,15 @@ const keymapCapture = document.querySelector("#keymap-capture");
 const keymapResetButton = document.querySelector("#keymap-reset");
 const usbConnectedToggle = document.querySelector("#usb-connected");
 const usbState = document.querySelector("#usb-state");
+const modelMark = document.querySelector("#model-mark");
+const modelTitle = document.querySelector("#model-title");
+const displayColumn = document.querySelector("#display-column");
+const displayLabel = document.querySelector("#display-label");
+const displaySize = document.querySelector("#display-size");
+const inputType = document.querySelector("#input-type");
+const usbDescription = document.querySelector("#usb-description");
+const keyboardDeck = document.querySelector("#keyboard-deck");
+const keyboardState = document.querySelector("#keyboard-state");
 
 const keyMap = {
   up: { keysym: 0xff52, code: "ArrowUp" },
@@ -93,6 +102,139 @@ const keyMap = {
   enter: { keysym: 0xff0d, code: "Enter" },
   escape: { keysym: 0xff1b, code: "Escape" },
 };
+for (const digit of "1234567890") {
+  keyMap[digit] = {
+    keysym: digit.charCodeAt(0),
+    code: `Digit${digit}`,
+  };
+}
+for (const letter of "abcdefghijklmnopqrstuvwxyz") {
+  keyMap[letter] = {
+    keysym: letter.charCodeAt(0),
+    code: `Key${letter.toUpperCase()}`,
+  };
+}
+Object.assign(keyMap, {
+  directory: { keysym: 0xff1b, code: "Escape" },
+  pronounce: { keysym: 0xffbe, code: "F1" },
+  shift: { keysym: 0xffe1, code: "ShiftLeft" },
+  pageUp: { keysym: 0xff55, code: "PageUp" },
+  pageDown: { keysym: 0xff56, code: "PageDown" },
+  help: { keysym: 0xff6a, code: "Help" },
+  start: { keysym: 0xffc2, code: "F5" },
+  systemMenu: { keysym: 0xffc3, code: "F6" },
+  exit9288: { keysym: 0xffc8, code: "F11" },
+  delete: { keysym: 0xffff, code: "Delete" },
+  inputMethod: { keysym: 0xff67, code: "ContextMenu" },
+  space: { keysym: 0x20, code: "Space" },
+});
+
+const matrixPhysicalActions = {
+  Escape: "directory",
+  F1: "pronounce",
+  F5: "start",
+  F6: "systemMenu",
+  F11: "exit9288",
+  Delete: "delete",
+  ContextMenu: "inputMethod",
+  Space: "space",
+  Enter: "enter",
+  NumpadEnter: "enter",
+  PageUp: "pageUp",
+  PageDown: "pageDown",
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  ShiftLeft: "shift",
+  ShiftRight: "shift",
+  Help: "help",
+};
+for (const digit of "1234567890") {
+  matrixPhysicalActions[`Digit${digit}`] = digit;
+  matrixPhysicalActions[`Numpad${digit}`] = digit;
+}
+for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+  matrixPhysicalActions[`Key${letter}`] = letter.toLowerCase();
+}
+
+const matrixRows = [
+  [..."1234567890"].map((key) => ({ label: key, key })),
+  [
+    ..."QWERTYUIOP".split("").map((key) => ({
+      label: key,
+      key: key.toLowerCase(),
+    })),
+    { label: "目录", key: "directory", weight: 1.25, role: "function" },
+  ],
+  [
+    ..."ASDFGHJKL".split("").map((key) => ({
+      label: key,
+      key: key.toLowerCase(),
+    })),
+    { label: "发音", key: "pronounce", weight: 1.25, role: "function" },
+  ],
+  [
+    {
+      label: "Shift",
+      key: "shift",
+      weight: 1.35,
+      role: "function",
+      shiftToggle: true,
+    },
+    ..."ZXCVBNM".split("").map((key) => ({
+      label: key,
+      key: key.toLowerCase(),
+    })),
+    { label: "上翻", key: "pageUp", weight: 1.25, role: "function" },
+    { label: "下翻", key: "pageDown", weight: 1.25, role: "function" },
+  ],
+  [
+    { label: "帮助", key: "help", weight: 1.2, role: "function" },
+    { label: "开始", key: "start", weight: 1.2, role: "function" },
+    { label: "菜单", key: "systemMenu", weight: 1.2, role: "function" },
+    { label: "退出", key: "exit9288", weight: 1.2, role: "exit" },
+    { label: "删除", key: "delete", weight: 1.2, role: "function" },
+    { label: "输入法", key: "inputMethod", weight: 1.35, role: "function" },
+    { label: "空格", key: "space", weight: 1.55 },
+    { label: "确定", key: "enter", weight: 1.2, role: "confirm" },
+    { label: "↑", key: "up", role: "direction" },
+    { label: "←", key: "left", role: "direction" },
+    { label: "↓", key: "down", role: "direction" },
+    { label: "→", key: "right", role: "direction" },
+  ],
+];
+
+function buildMatrixKeyboard() {
+  let keyCount = 0;
+  for (const rowDefinition of matrixRows) {
+    const row = document.createElement("div");
+    row.className = "matrix-row";
+    for (const definition of rowDefinition) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "matrix-key";
+      button.textContent = definition.label;
+      button.dataset.key = definition.key;
+      button.dataset.role = definition.role || "key";
+      button.title = definition.label;
+      button.setAttribute("aria-label", definition.label);
+      button.style.setProperty("--key-weight", String(definition.weight || 1));
+      if (definition.shiftToggle) {
+        button.dataset.shiftToggle = "true";
+        button.setAttribute("aria-pressed", "false");
+      }
+      row.append(button);
+      keyCount++;
+    }
+    keyboardDeck.append(row);
+  }
+  if (keyCount !== 53) {
+    throw new Error(`9288 Web keyboard must have 53 keys, got ${keyCount}`);
+  }
+}
+
+buildMatrixKeyboard();
 const defaultKeyBindings = Object.freeze({
   up: "KeyW",
   down: "KeyS",
@@ -189,8 +331,55 @@ let audioSourceBuffer = null;
 let audioObjectUrl = null;
 let keyBindings = loadKeyBindings();
 let recordingKeyAction = null;
+let currentMachine = document.documentElement.dataset.machine || "bbk9288";
+let matrixShiftArmed = false;
+let keyboardStateTimer = null;
 const keyboardPresses = new Map();
 const deviceKeyResetters = new Set();
+
+function setMatrixShiftArmed(armed) {
+  matrixShiftArmed = armed;
+  const shiftButton = keyboardDeck.querySelector("[data-shift-toggle]");
+  shiftButton?.classList.toggle("is-armed", armed);
+  shiftButton?.setAttribute("aria-pressed", String(armed));
+  if (currentMachine === "bbk9288") {
+    keyboardState.textContent = armed
+      ? "Shift 已锁定：请选择一个字母或数字"
+      : "点击按键或直接使用电脑键盘";
+  }
+}
+
+function announceMatrixKey(label) {
+  window.clearTimeout(keyboardStateTimer);
+  keyboardState.textContent = `已发送：${label}`;
+  keyboardStateTimer = window.setTimeout(() => {
+    if (!matrixShiftArmed) {
+      keyboardState.textContent = "点击按键或直接使用电脑键盘";
+    }
+  }, 1400);
+}
+
+function applyMachineStatus(status) {
+  const machine = status?.machine === "bbk9288s" ? "bbk9288s" : "bbk9288";
+  const is9288 = machine === "bbk9288";
+  currentMachine = machine;
+  document.documentElement.dataset.machine = machine;
+  document.title = `${is9288 ? "BBK 9288" : "BBK 9288S"} Web Emulator`;
+  modelMark.textContent = is9288 ? "9288" : "9288S";
+  modelTitle.textContent = is9288 ? "BBK 9288" : "BBK 9288S";
+  displayColumn.setAttribute(
+    "aria-label",
+    `${is9288 ? "9288" : "9288S"} 显示屏`,
+  );
+  displayLabel.textContent = is9288 ? "320 × 240 LCD" : "16 GRAY LCD";
+  displaySize.textContent = is9288 ? "320 x 240" : "160 x 240";
+  inputType.textContent = is9288 ? "53-key matrix" : "Touch + keys";
+  touchLayer.hidden = is9288;
+  usbDescription.textContent = `模拟${is9288 ? " 9288" : " 9288S"}的 USB 供电检测`;
+  if (!is9288) {
+    setMatrixShiftArmed(false);
+  }
+}
 
 const savedVolume = Number.parseFloat(
   window.localStorage.getItem("bbk9288s.audioVolume") || "0.8",
@@ -574,6 +763,7 @@ function resetInputState(connection = rfb) {
     sendKey(action, false, connection);
     setKeyboardActionPressed(action, false);
   }
+  setMatrixShiftArmed(false);
   resetTouchInput(connection);
   for (const reset of deviceKeyResetters) {
     reset();
@@ -713,7 +903,10 @@ function handleMappedKeyDown(event) {
     return;
   }
 
-  const action = mappedAction(event.code);
+  const action =
+    currentMachine === "bbk9288"
+      ? matrixPhysicalActions[event.code]
+      : mappedAction(event.code);
   if (!action) {
     if (nativeDeviceKeyCodes.has(event.code)) {
       event.preventDefault();
@@ -745,8 +938,12 @@ function handleMappedKeyUp(event) {
     return;
   }
 
+  const mapped =
+    currentMachine === "bbk9288"
+      ? matrixPhysicalActions[event.code]
+      : mappedAction(event.code);
   const state = keyboardPresses.get(event.code);
-  if (!state && !mappedAction(event.code)) {
+  if (!state && !mapped) {
     if (nativeDeviceKeyCodes.has(event.code)) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -966,10 +1163,21 @@ touchLayer.addEventListener("pointerup", releaseTouch);
 touchLayer.addEventListener("pointercancel", releaseTouch);
 touchLayer.addEventListener("lostpointercapture", releaseTouch);
 
-for (const button of document.querySelectorAll("[data-key]")) {
+for (const button of document.querySelectorAll("[data-shift-toggle]")) {
+  button.addEventListener("click", (event) => {
+    setMatrixShiftArmed(!matrixShiftArmed);
+    event.preventDefault();
+  });
+  deviceKeyResetters.add(() => setMatrixShiftArmed(false));
+}
+
+for (const button of document.querySelectorAll(
+  "[data-key]:not([data-shift-toggle])",
+)) {
   let activePointer = null;
   let pressedAt = 0;
   let releaseTimer = null;
+  let chordShift = false;
 
   const release = (event) => {
     if (activePointer === null || releaseTimer !== null) {
@@ -977,7 +1185,15 @@ for (const button of document.querySelectorAll("[data-key]")) {
     }
     const finishRelease = () => {
       sendKey(button.dataset.key, false);
+      if (chordShift) {
+        sendKey("shift", false);
+        chordShift = false;
+        setMatrixShiftArmed(false);
+      }
       button.classList.remove("is-pressed");
+      if (currentMachine === "bbk9288") {
+        announceMatrixKey(button.textContent.trim());
+      }
       activePointer = null;
       releaseTimer = null;
     };
@@ -995,6 +1211,13 @@ for (const button of document.querySelectorAll("[data-key]")) {
     pressedAt = window.performance.now();
     button.setPointerCapture(event.pointerId);
     button.classList.add("is-pressed");
+    chordShift =
+      currentMachine === "bbk9288" &&
+      matrixShiftArmed &&
+      /^[a-z0-9]$/.test(button.dataset.key);
+    if (chordShift) {
+      sendKey("shift", true);
+    }
     sendKey(button.dataset.key, true);
     event.preventDefault();
   });
@@ -1003,6 +1226,10 @@ for (const button of document.querySelectorAll("[data-key]")) {
   button.addEventListener("lostpointercapture", release);
   deviceKeyResetters.add(() => {
     window.clearTimeout(releaseTimer);
+    if (chordShift) {
+      sendKey("shift", false);
+      chordShift = false;
+    }
     activePointer = null;
     releaseTimer = null;
     button.classList.remove("is-pressed");
@@ -1045,6 +1272,7 @@ powerButton.addEventListener("click", async () => {
       method: "POST",
     });
     managerStatus = status;
+    applyMachineStatus(status);
     setPowerState(status);
     showToast(wasRunning ? "设备已重启" : "设备已启动");
     connect();
@@ -1392,6 +1620,7 @@ async function openDirectory(path) {
 
 function renderManagerStatus(status) {
   managerStatus = status;
+  applyMachineStatus(status);
   setPowerState(status);
   renderUsbSetting(status);
   maintenanceGate.hidden = status.maintenance;
@@ -1631,6 +1860,7 @@ window.setInterval(() => {
   apiRequest("/api/status")
     .then((status) => {
       managerStatus = status;
+      applyMachineStatus(status);
       setPowerState(status);
       renderUsbSetting(status);
       if (!status.emulatorRunning && !status.maintenance && !powerBusy) {
@@ -1643,6 +1873,7 @@ window.setInterval(() => {
 apiRequest("/api/status")
   .then((status) => {
     managerStatus = status;
+    applyMachineStatus(status);
     setPowerState(status);
     renderUsbSetting(status);
     if (!status.emulatorRunning && !status.maintenance) {

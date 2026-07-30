@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serve the BBK 9288S Web UI and manage its offline NAND workspace."""
+"""Serve the BBK 9288/9288S Web UI and manage its NAND workspace."""
 
 from __future__ import annotations
 
@@ -75,6 +75,7 @@ class QemuController:
     def __init__(
         self,
         root: Path,
+        machine: str,
         executable: Path,
         nand: Path,
         websocket_port: int,
@@ -84,6 +85,7 @@ class QemuController:
         settings_path: Path,
     ) -> None:
         self.root = root
+        self.machine = machine
         self.executable = executable
         self.nand = nand
         self.websocket_port = websocket_port
@@ -133,6 +135,10 @@ class QemuController:
     def running(self) -> bool:
         return self.process is not None and self.process.poll() is None
 
+    @property
+    def model_name(self) -> str:
+        return "BBK 9288" if self.machine == "bbk9288" else "BBK 9288S"
+
     def _relative(self, path: Path) -> str:
         resolved = path.resolve()
         try:
@@ -151,10 +157,10 @@ class QemuController:
         args = [
             str(self.executable),
             "-name",
-            "BBK 9288S Web",
+            f"{self.model_name} Web",
             "-machine",
             (
-                f"bbk9288s,nand-image={self._relative(self.nand)},"
+                f"{self.machine},nand-image={self._relative(self.nand)},"
                 f"audio-stream={self._relative(self.audio_stream_path)},"
                 f"usb-connected={'on' if self.usb_connected else 'off'}"
             ),
@@ -360,6 +366,11 @@ class NandWorkspace:
             self.qemu._close_finished_process()
             return {
                 "emulatorRunning": self.qemu.running,
+                "machine": self.qemu.machine,
+                "model": self.qemu.model_name,
+                "displayWidth": 320 if self.qemu.machine == "bbk9288" else 160,
+                "displayHeight": 240,
+                "touchInput": self.qemu.machine == "bbk9288s",
                 "websocketPort": self.qemu.websocket_port,
                 "usbConnected": self.qemu.usb_connected,
                 "lastExit": self.qemu.last_exit,
@@ -615,7 +626,7 @@ class NandWorkspace:
 
 
 class WebHandler(SimpleHTTPRequestHandler):
-    server_version = "BBK9288SWeb/1.0"
+    server_version = "BBK9288Web/1.0"
 
     @property
     def workspace(self) -> NandWorkspace:
@@ -855,6 +866,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--http-port", type=int, default=8000)
     parser.add_argument("--websocket-port", type=int, default=6081)
     parser.add_argument("--qmp-port", type=int, default=6082)
+    parser.add_argument(
+        "--machine",
+        choices=("bbk9288", "bbk9288s"),
+        default="bbk9288s",
+    )
     parser.add_argument("--qemu", type=Path)
     parser.add_argument("--runtime-dir", type=Path)
     parser.add_argument("--nand", type=Path)
@@ -874,12 +890,19 @@ def main() -> int:
 
     root = args.root.resolve()
     packaged = (root / "qemu-system-s1c33.exe").exists()
+    runtime_env = (
+        "BBK9288_RUNTIME_DIR"
+        if args.machine == "bbk9288"
+        else "BBK9288S_RUNTIME_DIR"
+    )
     default_runtime = (
-        root / "runtime" if packaged else root.parent / "eebbk9288s-runtime"
+        root / "runtime"
+        if args.machine == "bbk9288" or packaged
+        else root.parent / "eebbk9288s-runtime"
     )
     runtime_dir = Path(
         args.runtime_dir
-        or os.environ.get("BBK9288S_RUNTIME_DIR")
+        or os.environ.get(runtime_env)
         or default_runtime
     ).resolve()
     qemu_path = (
@@ -902,6 +925,7 @@ def main() -> int:
 
     qemu = QemuController(
         root,
+        args.machine,
         qemu_path,
         nand_path,
         args.websocket_port,
@@ -922,7 +946,10 @@ def main() -> int:
 
     try:
         qemu.start()
-        print(f"BBK 9288S Web server: http://127.0.0.1:{args.http_port}/")
+        print(
+            f"{qemu.model_name} Web server: "
+            f"http://127.0.0.1:{args.http_port}/"
+        )
         print(
             f"QEMU WebSocket: 0.0.0.0:{args.websocket_port}; "
             f"QMP: 127.0.0.1:{args.qmp_port}"

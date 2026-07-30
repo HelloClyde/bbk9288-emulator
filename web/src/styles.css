@@ -235,6 +235,27 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 236px;
 }
 
+html[data-machine="bbk9288"] .controls-9288s,
+html[data-machine="bbk9288s"] .controls-9288 {
+  display: none !important;
+}
+
+html[data-machine="bbk9288"] .workspace {
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-machine="bbk9288"] .display-column {
+  min-height: 430px;
+  padding: clamp(14px, 2.5vw, 28px);
+}
+
+html[data-machine="bbk9288"] .device-frame {
+  width: min(100%, 680px);
+  max-height: 500px;
+  aspect-ratio: 4 / 3;
+}
+
 .display-column {
   --display-padding: clamp(16px, 3vw, 36px);
 
@@ -248,6 +269,8 @@ h1 {
 .device-frame {
   display: flex;
   width: min(100%, 480px);
+  min-width: 0;
+  max-width: 100%;
   max-height: calc(100dvh - 109px - var(--display-padding) - var(--display-padding));
   aspect-ratio: 2 / 3;
   flex-direction: column;
@@ -270,6 +293,7 @@ h1 {
 }
 
 .screen-bezel {
+  min-width: 0;
   min-height: 0;
   flex: 1;
   padding: clamp(8px, 2vw, 14px);
@@ -534,6 +558,119 @@ h1 {
   max-height: none;
   margin: auto;
   border-radius: 0;
+}
+
+html[data-machine="bbk9288"] .device-frame:fullscreen {
+  width: min(100vw, calc(100vh * 4 / 3));
+}
+
+.keyboard-9288 {
+  padding: 16px clamp(14px, 3vw, 32px) 22px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.keyboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.keyboard-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.keyboard-heading strong {
+  font-size: 14px;
+}
+
+.keyboard-heading span,
+.keyboard-heading output {
+  color: var(--muted);
+  font-family: Consolas, monospace;
+  font-size: 10px;
+}
+
+.keyboard-heading output {
+  text-align: right;
+}
+
+.keyboard-scroll {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 4px;
+}
+
+.keyboard-deck {
+  display: grid;
+  min-width: 900px;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #9ea5a8;
+  border-radius: 8px;
+  background: #d9ddde;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 65%);
+}
+
+.matrix-row {
+  display: flex;
+  gap: 7px;
+}
+
+.matrix-key {
+  min-width: 0;
+  min-height: 43px;
+  flex: var(--key-weight, 1) 1 0;
+  padding: 4px 7px;
+  border: 1px solid #91989b;
+  border-radius: 5px;
+  background: #f6f7f7;
+  box-shadow: inset 0 -3px 0 rgb(32 35 38 / 12%);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  touch-action: none;
+  user-select: none;
+}
+
+.matrix-key:hover,
+.matrix-key:focus-visible {
+  border-color: var(--ink);
+  background: #ffffff;
+}
+
+.matrix-key.is-pressed,
+.matrix-key.is-armed {
+  transform: translateY(2px);
+  border-color: #8b670f;
+  background: #f5d15e;
+  box-shadow: inset 0 -1px 0 rgb(32 35 38 / 12%);
+}
+
+.matrix-key[data-role="function"] {
+  border-bottom: 3px solid #778185;
+}
+
+.matrix-key[data-role="confirm"] {
+  border-bottom: 3px solid var(--teal);
+}
+
+.matrix-key[data-role="exit"] {
+  border-bottom: 3px solid var(--red);
+}
+
+.matrix-key[data-role="direction"] {
+  font-size: 17px;
+}
+
+.settings-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
 }
 
 .command-button {
@@ -1276,6 +1413,34 @@ h1 {
     padding: 10px;
   }
 
+  html[data-machine="bbk9288"] .display-column {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  html[data-machine="bbk9288"] .device-frame {
+    width: min(100%, 560px);
+    max-height: none;
+  }
+
+  .keyboard-9288 {
+    padding: 13px 12px max(16px, env(safe-area-inset-bottom));
+  }
+
+  .keyboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .keyboard-heading output {
+    text-align: left;
+  }
+
+  .keyboard-deck {
+    min-width: 780px;
+  }
+
   .controls {
     --mobile-key-gap: clamp(4px, 1.2vw, 6px);
     --mobile-key-size: clamp(42px, 13vw, 54px);
@@ -1435,6 +1600,10 @@ h1 {
 
   .device-frame {
     max-height: 51dvh;
+  }
+
+  html[data-machine="bbk9288"] .device-frame {
+    max-height: none;
   }
 
   .file-volume {
