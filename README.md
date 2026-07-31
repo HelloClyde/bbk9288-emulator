@@ -47,25 +47,31 @@ NAND 是可写的，并在运行过程中增量保存。
 
 ## 快速开始
 
-准备好已构建的 `bbk9288.exe`（或 `_build\qemu-system-s1c33.exe`），并将
-有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`。首次运行先安装依赖：
+从 [Releases](https://github.com/HelloClyde/bbk9288-emulator/releases) 下载并
+解压 Windows x64 发布包，安装 Python 依赖：
 
 ```powershell
 python -m pip install -r .\requirements-bbk9288.txt
+```
+
+将有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`，然后双击
+`run-bbk9288-web.cmd`，或在 PowerShell 中运行：
+
+```powershell
+.\run-bbk9288-web.ps1
+```
+
+从源码运行时，需要先构建 `qemu-system-s1c33.exe` 并安装 Web 依赖：
+
+```powershell
 Push-Location .\web
 npm ci
 Pop-Location
-```
-
-启动 Web 控制台：
-
-```powershell
 .\run-bbk9288-web.ps1 -Nand .\runtime\nand-user.raw
 ```
 
-也可以在 NAND 位于默认路径时双击 `run-bbk9288-web.cmd`。浏览器访问
-`http://127.0.0.1:8000/`；启动器还会输出可供同一局域网手机或电脑访问的
-地址。网页中的扬声器按钮用于开启声音，按 `Ctrl+C` 可停止模拟器。
+浏览器访问 `http://127.0.0.1:8000/`；启动器还会输出可供同一局域网手机或
+电脑访问的地址。网页中的扬声器按钮用于开启声音，按 `Ctrl+C` 可停止模拟器。
 
 ## Web 前端功能
 
