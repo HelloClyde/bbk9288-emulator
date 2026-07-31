@@ -11,9 +11,19 @@
 有权使用的 9288 V1.5 NAND；Windows 便携发布包也应将这些文件作为独立资产
 提供，不写入 Git 历史。
 
+## 效果预览
+
+启动后的 Web 控制台（9288 专用界面、320 × 240 LCD 和完整 53 键面板）：
+
+![BBK 9288 Web 控制台](docs/assets/bbk9288-web.png)
+
+真实 V1.5 固件中的桌面、朗文当代、可视复读和初中英语语法：
+
+![BBK 9288 桌面与应用](docs/assets/bbk9288-gallery.png)
+
 ## 已实现
 
-- 新 QEMU machine type：`bbk9288`，保留原 `bbk9288s` 兼容性。
+- QEMU machine type：`bbk9288`；启动脚本和 Web 控制台只面向 9288。
 - 320 × 240 LCDC、40 KiB IVRAM 及 1/2/4/8 bpp 调色板渲染。
 - 9288 启动扩展窗口 `0x003A0000`，包括固件实测的初始化命令和就绪握手。
 - S1C33L05 标准串行接口状态，启动所需的 TDBE 行为。

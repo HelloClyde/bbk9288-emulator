@@ -177,8 +177,9 @@ Implemented pieces:
   of FPT4-FPT7 for touch GPIO calibration.
 - Timer0 and Timer1 use nanosecond deadlines derived from OSC1 or the 48 MHz
   system source and the documented `/1../4096` divisor. Compare A/B events set
-  their FIR2 factors and vectors, compare B resets the counter, and control,
-  clock-enable, PRESET, and rescheduling behavior are modeled.
+  their FIR2 factors; Timer0 B/A dispatch to vectors `30/31` and Timer1 B/A to
+  `34/35`. Compare B resets the counter, and control, clock-enable, PRESET, and
+  rescheduling behavior are modeled.
 - `debug-timer16-factors` now enables additional compare-event logging; it no
   longer gates the real Timer0/1 factor bits.
 - `strict-board-io` machine property, disabled by default, makes unknown board
