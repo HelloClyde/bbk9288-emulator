@@ -7,26 +7,23 @@
 
 基于 QEMU 11.0 的步步高 9288S 硬件模拟器。项目实现了 Epson
 S1C33L05 CPU、9288S 板级外设、16 灰阶 LCD、触摸/按键、持久化 NAND，
-外部 MP3 硬解码器总线，并提供可供局域网设备访问的 Web 控制台。
+以及外部 MP3 硬解码器总线。
 
 这是非官方逆向工程项目，与步步高、Epson 或 QEMU 项目没有隶属关系。
-
-![Web 控制台中的《三国霸业》和《海盗船》画面](docs/assets/preview.png)
 
 ## 当前状态
 
 - 板级加载器可从 NAND FAT16 中读取真实 `kernel.bin` 并完成启动。
 - `160 x 240` LCDC 根据 MODE0 寄存器解析 1/2/4/8 bpp 和灰阶 LUT；
   stock 固件默认使用 2 bpp 四灰阶，切换到 4 bpp 时可显示 16 灰阶。
-  P2.3 背光开关和自动熄屏会同步反映到 Web 画面。
+  P2.3 背光开关和自动熄屏会同步反映到模拟器画面。
 - 触摸通过 FPT6、Timer3-B 和板级串行 ADC 硬件路径进入固件。
 - 方向键通过 K5 GPIO，确定/退出通过 P0 GPIO 进入固件。
 - Timer2-B 提供 GUI 和游戏需要的系统节拍。
 - 外部音频模型支持 VS1003 SCI 控制/状态、DREQ 背压和 MP3 码流输出；
-  固件播放器可显示总时长与递增的当前播放时间，声音由 Web 浏览器播放。
+  固件播放器可显示总时长与递增的当前播放时间。
 - Samsung 兼容 `EC DA 10 95` NAND 支持读取、编程、擦除、运行中增量同步
   和退出时最终刷新。
-- Web 端可以游玩固件自带的《三国霸业》和《海盗船》，并管理 NAND 文件。
 
 触摸、按键和音频只经过 QEMU 的 FPT、GPIO、串行 ADC、定时器与板级音频
 数据口模型；源码不包含 guest 内存注入、系统 API 注入或应用级 hook。
@@ -39,20 +36,11 @@ S1C33L05 CPU、9288S 板级外设、16 灰阶 LCD、触摸/按键、持久化 NA
 1. 从 [Releases](https://github.com/HelloClyde/bbk9288s-qemu/releases) 下载
    `bbk9288s-qemu-*-windows-x64.zip`。
 2. 下载同一 Release 中的 `bbk9288s-test-nand.zip`，解压到模拟器目录。
-3. 安装 Python 3.11 或更高版本，并安装 NAND 管理依赖：
+3. 双击 `run-bbk9288s.cmd`，或在 PowerShell 中运行：
 
    ```powershell
-   python -m pip install -r requirements-bbk9288s.txt
+   .\run-bbk9288s.ps1
    ```
-
-4. 双击 `run-bbk9288s-web.cmd`，或在 PowerShell 中运行：
-
-   ```powershell
-   .\run-bbk9288s-web.ps1
-   ```
-
-启动器会输出本机和局域网 URL。默认地址为
-`http://127.0.0.1:8000/`。
 
 启动时，板级加载器扫描 NAND OOB 中的 FTL 映射，挂接 FAT16，并在目录树
 中寻找 `kernel.bin`；不再需要 NAND 之外的内核文件。测试 NAND 作为独立
@@ -61,59 +49,17 @@ Release 资产发布，不进入 Git 源码历史。请只使用你有权使用�
 
 ## 操作
 
-| 9288S 输入 | 键盘 | Web 控件 |
-| --- | --- | --- |
-| 上 / 下 / 左 / 右 | `W` / `S` / `A` / `D` | 方向键 |
-| 确定 | `J` | 确定 |
-| 退出 | `K` | 退出 |
-| 触摸屏 | 鼠标 | 直接触摸 LCD |
-
-`设置` 页的“按键映射”可以重新绑定这六个快捷键；映射保存在当前浏览器，
-重复分配已有按键时会自动交换两个动作的绑定。
-
-顶栏的电源按钮在设备关机时启动 QEMU，在设备运行时执行完整重启；旁边的
-刷新按钮只重新连接当前显示会话。
+| 9288S 输入 | 本机窗口 |
+| --- | --- |
+| 上 / 下 / 左 / 右 | 方向键 |
+| 确定 | `Enter` / `Space` |
+| 退出 | `Esc` / `Backspace` |
+| 触摸屏 | 鼠标 |
 
 固件任务栏最右侧的背光图标可以关闭或重新打开背光；系统设置中的背光
 超时使用同一条 P2.3 硬件控制路径。
 
-浏览器的自动播放策略要求先点一次扬声器按钮启用声音。扬声器按钮可静音，
-旁边的滑杆控制当前浏览器音量；声音在访问 Web 控制台的设备上播放。板级
-解码器使用带 P0.3 DREQ 背压的 8 KiB 有效输入队列，SCI
-`MODE/CLOCKF/DECODE_TIME/AUDATA/VOL` 寄存器由硬件模型响应；Web 端用
-MediaSource 持续解码，长时间播放不会占满 CPU 或无限增长运行目录。
-
 首次启动会要求依次点击 `(16,24)`、`(144,216)`、`(80,120)` 三个校准点。
-Web 前端会适度延长短触摸和短按键，使原固件的硬件去抖逻辑能够采样。
-快速连点会按顺序送入硬件触摸路径，不会因前一次延长释放而丢失。
-
-## 设置
-
-模拟器默认将 USB 设为已连接。原固件通过板级寄存器
-`0x01000022` 的 bit 7 检测 USB/VBUS；连接时会按外部供电路径运行，不会因
-长时间无操作而自动关机。可以在 Web 控制台的 `设置` 页切换 USB 状态，
-修改后 QEMU 会正常重启并应用新的硬件输入。
-
-键盘映射也位于 `设置` 页。默认方向键为 `W/A/S/D`，确定为 `J`，退出为
-`K`；浏览器会在本地保存自定义映射。
-
-## NAND 文件
-
-Web 控制台的 `NAND 文件` 页支持：
-
-- 目录浏览和容量统计
-- 多文件上传和文件下载
-- 新建目录、重命名、删除
-- 中文 VFAT 长文件名和固件 GBK 8.3 短文件名
-
-编辑前需要进入维护模式。后端会通过 QMP 正常停止 QEMU，等待板级 NAND
-模型保存 `nand-user.raw`，再提取 FAT16 文件系统。
-
-- `应用并重启`：修补 GBK 短文件名，重新生成 FTL/OOB 并启动 QEMU。
-- `放弃`：丢弃暂存文件系统，不修改 NAND。
-
-不要在 QEMU 运行时用外部工具编辑 `nand-user.raw`，也不要强杀 QEMU；
-未正常退出时，最后一部分 guest 写入可能尚未保存。
 
 ## 运行目录
 
@@ -123,22 +69,17 @@ Web 控制台的 `NAND 文件` 页支持：
 E:\
 ├─ eebbk9288s-qemu\
 └─ eebbk9288s-runtime\
-   ├─ nand-user.raw
-   ├─ settings.json
-   ├─ web-qemu.stderr.log
-   └─ web-audio-stream.mp3
+   └─ nand-user.raw
 ```
 
 Release 解压版默认使用包内的 `runtime`。可以通过参数或环境变量改写：
 
 ```powershell
-.\run-bbk9288s-web.ps1 -RuntimeDir D:\9288s-data
+.\run-bbk9288s.ps1 -RuntimeDir D:\9288s-data
 $env:BBK9288S_RUNTIME_DIR = 'D:\9288s-data'
 ```
 
 这样重新配置或清理 QEMU 构建目录不会删除 NAND 和固件。
-`settings.json` 保存 USB 连接状态；文件不存在时默认连接。
-`web-audio-stream.mp3` 是每次启动重建的临时硬件码流，不是固件输入文件。
 
 ## 源码构建
 
@@ -146,8 +87,6 @@ $env:BBK9288S_RUNTIME_DIR = 'D:\9288s-data'
 
 - Windows 10/11 x64
 - MSYS2 UCRT64
-- Node.js 20+
-- Python 3.11+
 
 在 MSYS2 UCRT64 中安装基本构建依赖：
 
@@ -161,7 +100,7 @@ pacman -S --needed base-devel git diffutils \
   mingw-w64-ucrt-x86_64-python
 ```
 
-从 PowerShell 配置和构建最小 Web 版本：
+从 PowerShell 配置和构建：
 
 ```powershell
 New-Item -ItemType Directory -Force _build | Out-Null
@@ -173,28 +112,18 @@ Push-Location _build
 Pop-Location
 ```
 
-构建 Web 前端：
-
-```powershell
-Push-Location web
-npm ci
-npm run build
-Pop-Location
-```
-
-之后运行 `run-bbk9288s-web.ps1`。启动器会优先查找根目录 Release
+之后运行 `run-bbk9288s.ps1`。启动器会优先查找根目录 Release
 二进制，其次查找 `build` 和 `_build`。
 
 ## 发布
 
 `.github/workflows/release.yml` 在推送 `v*` tag 时：
 
-1. 构建 Vite/noVNC 前端。
-2. 在 MSYS2 UCRT64 中构建最小 QEMU Windows x64 二进制。
-3. 递归收集所需 MSYS2 DLL。
-4. 生成 ZIP、文件清单和 SHA-256。
-5. 创建 GitHub Release。
-6. 如果 `nand-test-image` Release 已存在，则附带测试 NAND 资产。
+1. 在 MSYS2 UCRT64 中构建 QEMU Windows x64 二进制。
+2. 递归收集所需 MSYS2 DLL。
+3. 生成 ZIP、文件清单和 SHA-256。
+4. 创建 GitHub Release。
+5. 如果 `nand-test-image` Release 已存在，则附带测试 NAND 资产。
 
 首次或更新测试 NAND 时，在仓库根目录运行：
 
@@ -212,16 +141,10 @@ Pop-Location
 - `target/s1c33/`：S1C33 CPU 状态、TCG 翻译、异常、中断和反汇编。
 - `hw/s1c33/bbk9288s.c`：9288/9288S 内存映射和板级硬件模型。
 - `scripts/bbk9288s_nand_image.py`：NAND FTL/OOB 提取、打包和系统安装。
-- `scripts/bbk9288s_web_server.py`：QEMU 生命周期、QMP、音频流和 NAND 文件 API。
-- `web/`：Vite + noVNC Web 控制台。
 - `plan.md`：逆向过程、验证证据和后续工作。
 - `docs/technical-notes.md`：详细寄存器、调试属性和实验记录。
 
 ## 安全
-
-WebSocket、音频流和 NAND HTTP API 默认没有认证或 TLS，只应暴露在可信
-局域网。QMP 固定监听 `127.0.0.1`。不要把 `8000` 或 `6081` 端口直接
-映射到公网。
 
 安全问题请参考 [SECURITY.md](SECURITY.md)。
 

@@ -1,11 +1,6 @@
 import RFB from "@novnc/novnc";
 import {
-  ChevronDown,
-  ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  CircleCheck,
-  CornerUpLeft,
   Download,
   File,
   Folder,
@@ -32,12 +27,7 @@ import {
 import "./styles.css";
 
 const iconSet = {
-  ChevronDown,
-  ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  CircleCheck,
-  CornerUpLeft,
   Download,
   File,
   Folder,
@@ -75,22 +65,12 @@ const powerButton = document.querySelector("#device-power");
 const reconnectButton = document.querySelector("#reconnect");
 const fullscreenButton = document.querySelector("#fullscreen");
 const deviceFrame = document.querySelector("#device-frame");
-const touchLayer = document.querySelector("#touch-layer");
 const audioElement = document.querySelector("#audio-stream");
 const audioToggle = document.querySelector("#audio-toggle");
 const audioVolume = document.querySelector("#audio-volume");
 const audioVolumeValue = document.querySelector("#audio-volume-value");
-const keymapCapture = document.querySelector("#keymap-capture");
-const keymapResetButton = document.querySelector("#keymap-reset");
 const usbConnectedToggle = document.querySelector("#usb-connected");
 const usbState = document.querySelector("#usb-state");
-const modelMark = document.querySelector("#model-mark");
-const modelTitle = document.querySelector("#model-title");
-const displayColumn = document.querySelector("#display-column");
-const displayLabel = document.querySelector("#display-label");
-const displaySize = document.querySelector("#display-size");
-const inputType = document.querySelector("#input-type");
-const usbDescription = document.querySelector("#usb-description");
 const keyboardDeck = document.querySelector("#keyboard-deck");
 const keyboardState = document.querySelector("#keyboard-state");
 
@@ -235,87 +215,9 @@ function buildMatrixKeyboard() {
 }
 
 buildMatrixKeyboard();
-const defaultKeyBindings = Object.freeze({
-  up: "KeyW",
-  down: "KeyS",
-  left: "KeyA",
-  right: "KeyD",
-  enter: "KeyJ",
-  escape: "KeyK",
-});
-const keyActionLabels = {
-  up: "上",
-  down: "下",
-  left: "左",
-  right: "右",
-  enter: "确定",
-  escape: "退出",
-};
-const keyBindingStorageKey = "bbk9288s.keyBindings.v1";
-const nativeDeviceKeyCodes = new Set([
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "Enter",
-  "Escape",
-  "Space",
-  "Backspace",
-]);
-const keyCodeLabels = {
-  ArrowUp: "↑",
-  ArrowDown: "↓",
-  ArrowLeft: "←",
-  ArrowRight: "→",
-  Backspace: "Backspace",
-  Enter: "Enter",
-  Escape: "Esc",
-  Space: "Space",
-  Tab: "Tab",
-  ShiftLeft: "L Shift",
-  ShiftRight: "R Shift",
-  ControlLeft: "L Ctrl",
-  ControlRight: "R Ctrl",
-  AltLeft: "L Alt",
-  AltRight: "R Alt",
-};
 // The firmware scans the physical key matrix at a relatively slow cadence.
 // Keep quick Web taps asserted long enough to cross a complete scan window.
 const minimumKeyHoldMs = 180;
-const minimumTouchHoldMs = 180;
-
-function loadKeyBindings() {
-  try {
-    const saved = JSON.parse(
-      window.localStorage.getItem(keyBindingStorageKey) || "{}",
-    );
-    const bindings = { ...defaultKeyBindings };
-    for (const action of Object.keys(defaultKeyBindings)) {
-      if (typeof saved[action] === "string" && saved[action].length <= 64) {
-        bindings[action] = saved[action];
-      }
-    }
-    if (new Set(Object.values(bindings)).size === Object.keys(bindings).length) {
-      return bindings;
-    }
-  } catch (error) {
-    console.warn("Unable to load key bindings", error);
-  }
-  return { ...defaultKeyBindings };
-}
-
-function keyCodeLabel(code) {
-  if (/^Key[A-Z]$/.test(code)) {
-    return code.slice(3);
-  }
-  if (/^Digit[0-9]$/.test(code)) {
-    return code.slice(5);
-  }
-  if (/^Numpad[0-9]$/.test(code)) {
-    return `Num ${code.slice(6)}`;
-  }
-  return keyCodeLabels[code] || code;
-}
 
 let rfb = null;
 let reconnectTimer = null;
@@ -329,9 +231,6 @@ let audioAbortController = null;
 let audioMediaSource = null;
 let audioSourceBuffer = null;
 let audioObjectUrl = null;
-let keyBindings = loadKeyBindings();
-let recordingKeyAction = null;
-let currentMachine = document.documentElement.dataset.machine || "bbk9288";
 let matrixShiftArmed = false;
 let keyboardStateTimer = null;
 const keyboardPresses = new Map();
@@ -342,11 +241,9 @@ function setMatrixShiftArmed(armed) {
   const shiftButton = keyboardDeck.querySelector("[data-shift-toggle]");
   shiftButton?.classList.toggle("is-armed", armed);
   shiftButton?.setAttribute("aria-pressed", String(armed));
-  if (currentMachine === "bbk9288") {
-    keyboardState.textContent = armed
-      ? "Shift 已锁定：请选择一个字母或数字"
-      : "点击按键或直接使用电脑键盘";
-  }
+  keyboardState.textContent = armed
+    ? "Shift 已锁定：请选择一个字母或数字"
+    : "点击按键或直接使用电脑键盘";
 }
 
 function announceMatrixKey(label) {
@@ -359,30 +256,8 @@ function announceMatrixKey(label) {
   }, 1400);
 }
 
-function applyMachineStatus(status) {
-  const machine = status?.machine === "bbk9288s" ? "bbk9288s" : "bbk9288";
-  const is9288 = machine === "bbk9288";
-  currentMachine = machine;
-  document.documentElement.dataset.machine = machine;
-  document.title = `${is9288 ? "BBK 9288" : "BBK 9288S"} Web Emulator`;
-  modelMark.textContent = is9288 ? "9288" : "9288S";
-  modelTitle.textContent = is9288 ? "BBK 9288" : "BBK 9288S";
-  displayColumn.setAttribute(
-    "aria-label",
-    `${is9288 ? "9288" : "9288S"} 显示屏`,
-  );
-  displayLabel.textContent = is9288 ? "320 × 240 LCD" : "16 GRAY LCD";
-  displaySize.textContent = is9288 ? "320 x 240" : "160 x 240";
-  inputType.textContent = is9288 ? "53-key matrix" : "Touch + keys";
-  touchLayer.hidden = is9288;
-  usbDescription.textContent = `模拟${is9288 ? " 9288" : " 9288S"}的 USB 供电检测`;
-  if (!is9288) {
-    setMatrixShiftArmed(false);
-  }
-}
-
 const savedVolume = Number.parseFloat(
-  window.localStorage.getItem("bbk9288s.audioVolume") || "0.8",
+  window.localStorage.getItem("bbk9288.audioVolume") || "0.8",
 );
 audioElement.volume = Number.isFinite(savedVolume)
   ? Math.min(1, Math.max(0, savedVolume))
@@ -619,7 +494,7 @@ audioVolume.addEventListener("input", () => {
   audioElement.volume = Number(audioVolume.value);
   audioElement.muted = audioElement.volume === 0;
   window.localStorage.setItem(
-    "bbk9288s.audioVolume",
+    "bbk9288.audioVolume",
     String(audioElement.volume),
   );
   if (!audioEnabled && audioElement.volume > 0) {
@@ -764,70 +639,9 @@ function resetInputState(connection = rfb) {
     setKeyboardActionPressed(action, false);
   }
   setMatrixShiftArmed(false);
-  resetTouchInput(connection);
   for (const reset of deviceKeyResetters) {
     reset();
   }
-}
-
-function saveKeyBindings() {
-  try {
-    window.localStorage.setItem(
-      keyBindingStorageKey,
-      JSON.stringify(keyBindings),
-    );
-  } catch (error) {
-    console.warn("Unable to save key bindings", error);
-  }
-}
-
-function updateKeyBindingUi() {
-  for (const label of document.querySelectorAll("[data-shortcut]")) {
-    label.textContent = keyCodeLabel(keyBindings[label.dataset.shortcut]);
-  }
-
-  for (const button of document.querySelectorAll("[data-map-action]")) {
-    const action = button.dataset.mapAction;
-    const label = keyCodeLabel(keyBindings[action]);
-    const recording = recordingKeyAction === action;
-
-    button.querySelector("kbd").textContent = recording ? "…" : label;
-    button.classList.toggle("is-recording", recording);
-    button.setAttribute(
-      "aria-label",
-      recording
-        ? `正在设置${keyActionLabels[action]}键`
-        : `设置${keyActionLabels[action]}键，当前 ${label}`,
-    );
-  }
-
-  keymapCapture.hidden = recordingKeyAction === null;
-  keymapCapture.textContent =
-    recordingKeyAction === null
-      ? ""
-      : `正在设置：${keyActionLabels[recordingKeyAction]}`;
-}
-
-function assignKeyBinding(action, code) {
-  const previousCode = keyBindings[action];
-  const conflictingAction = Object.keys(keyBindings).find(
-    (candidate) => candidate !== action && keyBindings[candidate] === code,
-  );
-
-  if (conflictingAction) {
-    keyBindings[conflictingAction] = previousCode;
-  }
-  keyBindings[action] = code;
-  recordingKeyAction = null;
-  saveKeyBindings();
-  updateKeyBindingUi();
-  showToast(`${keyActionLabels[action]}键已设为 ${keyCodeLabel(code)}`);
-}
-
-function mappedAction(code) {
-  return Object.keys(keyBindings).find(
-    (action) => keyBindings[action] === code,
-  );
 }
 
 function setKeyboardActionPressed(action, pressed) {
@@ -881,18 +695,6 @@ function isTextInput(target) {
 }
 
 function handleMappedKeyDown(event) {
-  if (recordingKeyAction !== null) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (event.repeat) {
-      return;
-    }
-    if (event.code) {
-      assignKeyBinding(recordingKeyAction, event.code);
-    }
-    return;
-  }
-
   if (
     event.isComposing ||
     isTextInput(event.target) ||
@@ -903,15 +705,8 @@ function handleMappedKeyDown(event) {
     return;
   }
 
-  const action =
-    currentMachine === "bbk9288"
-      ? matrixPhysicalActions[event.code]
-      : mappedAction(event.code);
+  const action = matrixPhysicalActions[event.code];
   if (!action) {
-    if (nativeDeviceKeyCodes.has(event.code)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
     return;
   }
 
@@ -932,22 +727,9 @@ function handleMappedKeyDown(event) {
 }
 
 function handleMappedKeyUp(event) {
-  if (recordingKeyAction !== null) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    return;
-  }
-
-  const mapped =
-    currentMachine === "bbk9288"
-      ? matrixPhysicalActions[event.code]
-      : mappedAction(event.code);
+  const mapped = matrixPhysicalActions[event.code];
   const state = keyboardPresses.get(event.code);
   if (!state && !mapped) {
-    if (nativeDeviceKeyCodes.has(event.code)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
     return;
   }
 
@@ -955,21 +737,6 @@ function handleMappedKeyUp(event) {
   event.stopImmediatePropagation();
   releaseKeyboardPress(event.code);
 }
-
-for (const button of document.querySelectorAll("[data-map-action]")) {
-  button.addEventListener("click", () => {
-    recordingKeyAction = button.dataset.mapAction;
-    updateKeyBindingUi();
-  });
-}
-
-keymapResetButton.addEventListener("click", () => {
-  keyBindings = { ...defaultKeyBindings };
-  recordingKeyAction = null;
-  saveKeyBindings();
-  updateKeyBindingUi();
-  showToast("按键映射已恢复默认");
-});
 
 window.addEventListener("keydown", handleMappedKeyDown, true);
 window.addEventListener("keyup", handleMappedKeyUp, true);
@@ -980,188 +747,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 window.addEventListener("pagehide", () => resetInputState());
-updateKeyBindingUi();
-
-function pointerPosition(event) {
-  const canvas = screen.querySelector("canvas");
-  if (!canvas) {
-    return null;
-  }
-
-  const bounds = canvas.getBoundingClientRect();
-  if (
-    event.clientX < bounds.left ||
-    event.clientX >= bounds.right ||
-    event.clientY < bounds.top ||
-    event.clientY >= bounds.bottom
-  ) {
-    return null;
-  }
-
-  return {
-    x: event.clientX - bounds.left,
-    y: event.clientY - bounds.top,
-  };
-}
-
-const minimumTouchGapMs = 60;
-const maximumQueuedTouches = 12;
-let activeTouch = null;
-const queuedTouches = [];
-let touchReleaseTimer = null;
-let touchGapTimer = null;
-let deferredTouch = null;
-
-function sendPointerButton(position, mask, connection = rfb) {
-  // noVNC has no public pointer injection API. This keeps input on its normal
-  // RFB path while allowing the original firmware's touch debounce to settle.
-  if (
-    !connection ||
-    !position ||
-    typeof connection._handleMouseButton !== "function"
-  ) {
-    return;
-  }
-  connection._handleMouseButton(position.x, position.y, mask);
-}
-
-function beginQueuedTouch(touch) {
-  activeTouch = touch;
-  activeTouch.sentAt = window.performance.now();
-  sendPointerButton(activeTouch.position, 1);
-  if (activeTouch.released) {
-    scheduleTouchRelease();
-  }
-}
-
-function beginNextQueuedTouch() {
-  if (activeTouch !== null || touchGapTimer !== null) {
-    return;
-  }
-  const next = queuedTouches.shift();
-  if (!next) {
-    return;
-  }
-  deferredTouch = next;
-  touchGapTimer = window.setTimeout(() => {
-    const touch = deferredTouch;
-    deferredTouch = null;
-    touchGapTimer = null;
-    beginQueuedTouch(touch);
-  }, minimumTouchGapMs);
-}
-
-function scheduleTouchRelease() {
-  if (
-    activeTouch === null ||
-    !activeTouch.released ||
-    touchReleaseTimer !== null
-  ) {
-    return;
-  }
-  const finishRelease = () => {
-    sendPointerButton(activeTouch.position, 0);
-    activeTouch = null;
-    touchReleaseTimer = null;
-    beginNextQueuedTouch();
-  };
-  const heldFor = window.performance.now() - activeTouch.sentAt;
-  touchReleaseTimer = window.setTimeout(
-    finishRelease,
-    Math.max(0, minimumTouchHoldMs - heldFor),
-  );
-}
-
-function findPendingTouch(pointerId) {
-  for (let index = queuedTouches.length - 1; index >= 0; index--) {
-    const touch = queuedTouches[index];
-    if (touch.pointerId === pointerId && !touch.released) {
-      return touch;
-    }
-  }
-  if (
-    deferredTouch?.pointerId === pointerId &&
-    !deferredTouch.released
-  ) {
-    return deferredTouch;
-  }
-  if (
-    activeTouch?.pointerId === pointerId &&
-    !activeTouch.released
-  ) {
-    return activeTouch;
-  }
-  return null;
-}
-
-function releaseTouch(event) {
-  const touch = findPendingTouch(event.pointerId);
-  if (!touch) {
-    return;
-  }
-  touch.position = pointerPosition(event) || touch.position;
-  touch.released = true;
-  if (touch === activeTouch) {
-    scheduleTouchRelease();
-  }
-  event.preventDefault();
-}
-
-function resetTouchInput(connection = rfb) {
-  window.clearTimeout(touchReleaseTimer);
-  window.clearTimeout(touchGapTimer);
-  touchReleaseTimer = null;
-  touchGapTimer = null;
-  deferredTouch = null;
-  queuedTouches.length = 0;
-  if (activeTouch !== null) {
-    sendPointerButton(activeTouch.position, 0, connection);
-    activeTouch = null;
-  }
-}
-
-touchLayer.addEventListener("pointerdown", (event) => {
-  const position = pointerPosition(event);
-  if (!position) {
-    return;
-  }
-
-  const touch = {
-    pointerId: event.pointerId,
-    position,
-    released: false,
-    sentAt: 0,
-  };
-  touchLayer.setPointerCapture(event.pointerId);
-  screen.focus({ preventScroll: true });
-  if (activeTouch === null && touchGapTimer === null) {
-    beginQueuedTouch(touch);
-  } else if (queuedTouches.length < maximumQueuedTouches) {
-    queuedTouches.push(touch);
-  }
-  event.preventDefault();
-});
-
-touchLayer.addEventListener("pointermove", (event) => {
-  const touch = findPendingTouch(event.pointerId);
-  if (!touch || !rfb) {
-    return;
-  }
-
-  const position = pointerPosition(event);
-  if (!position) {
-    return;
-  }
-  touch.position = position;
-  if (touch === activeTouch && typeof rfb._handleMouseMove === "function") {
-    rfb._handleMouseMove(position.x, position.y);
-  }
-  event.preventDefault();
-});
-
-touchLayer.addEventListener("pointerup", releaseTouch);
-touchLayer.addEventListener("pointercancel", releaseTouch);
-touchLayer.addEventListener("lostpointercapture", releaseTouch);
 
 for (const button of document.querySelectorAll("[data-shift-toggle]")) {
   button.addEventListener("click", (event) => {
@@ -1191,9 +776,7 @@ for (const button of document.querySelectorAll(
         setMatrixShiftArmed(false);
       }
       button.classList.remove("is-pressed");
-      if (currentMachine === "bbk9288") {
-        announceMatrixKey(button.textContent.trim());
-      }
+      announceMatrixKey(button.textContent.trim());
       activePointer = null;
       releaseTimer = null;
     };
@@ -1212,9 +795,7 @@ for (const button of document.querySelectorAll(
     button.setPointerCapture(event.pointerId);
     button.classList.add("is-pressed");
     chordShift =
-      currentMachine === "bbk9288" &&
-      matrixShiftArmed &&
-      /^[a-z0-9]$/.test(button.dataset.key);
+      matrixShiftArmed && /^[a-z0-9]$/.test(button.dataset.key);
     if (chordShift) {
       sendKey("shift", true);
     }
@@ -1272,7 +853,6 @@ powerButton.addEventListener("click", async () => {
       method: "POST",
     });
     managerStatus = status;
-    applyMachineStatus(status);
     setPowerState(status);
     showToast(wasRunning ? "设备已重启" : "设备已启动");
     connect();
@@ -1620,7 +1200,6 @@ async function openDirectory(path) {
 
 function renderManagerStatus(status) {
   managerStatus = status;
-  applyMachineStatus(status);
   setPowerState(status);
   renderUsbSetting(status);
   maintenanceGate.hidden = status.maintenance;
@@ -1663,14 +1242,7 @@ function disconnectForMaintenance() {
 }
 
 async function switchView(view) {
-  if (recordingKeyAction !== null) {
-    recordingKeyAction = null;
-    updateKeyBindingUi();
-  }
   releaseAllKeyboardPresses();
-  if (view !== "emulator") {
-    resetTouchInput();
-  }
   for (const tab of viewTabs) {
     const active = tab.dataset.view === view;
     tab.classList.toggle("is-active", active);
@@ -1860,7 +1432,6 @@ window.setInterval(() => {
   apiRequest("/api/status")
     .then((status) => {
       managerStatus = status;
-      applyMachineStatus(status);
       setPowerState(status);
       renderUsbSetting(status);
       if (!status.emulatorRunning && !status.maintenance && !powerBusy) {
@@ -1873,7 +1444,6 @@ window.setInterval(() => {
 apiRequest("/api/status")
   .then((status) => {
     managerStatus = status;
-    applyMachineStatus(status);
     setPowerState(status);
     renderUsbSetting(status);
     if (!status.emulatorRunning && !status.maintenance) {

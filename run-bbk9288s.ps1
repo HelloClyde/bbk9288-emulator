@@ -8,10 +8,22 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runtimeBin = "C:\msys64\ucrt64\bin"
-$qemu = Join-Path $root "build\qemu-system-s1c33.exe"
+$packagedQemu = Join-Path $root "qemu-system-s1c33.exe"
+$qemu = @(
+    $packagedQemu,
+    (Join-Path $root "build\qemu-system-s1c33.exe"),
+    (Join-Path $root "_build\qemu-system-s1c33.exe")
+) |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -First 1
+if ([string]::IsNullOrWhiteSpace($qemu)) {
+    throw "Required QEMU executable is missing"
+}
 if (-not $RuntimeDir) {
     $RuntimeDir = if ($env:BBK9288S_RUNTIME_DIR) {
         $env:BBK9288S_RUNTIME_DIR
+    } elseif (Test-Path -LiteralPath $packagedQemu) {
+        Join-Path $root "runtime"
     } else {
         Join-Path (Split-Path -Parent $root) "eebbk9288s-runtime"
     }

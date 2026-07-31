@@ -93,8 +93,7 @@ Implemented pieces:
   at the detected MPEG bitrate on a real-time clock, and DECODE_TIME reports
   consumed full seconds. Guest writes to DECODE_TIME also reposition the
   decoder clock, so stop and replay begin again at zero. The capture rotates at
-  32 MiB; the Web server forwards that hardware output to the browser and never
-  reads audio files from NAND.
+  32 MiB and never reads audio files from NAND.
 - Board-level Samsung-compatible NAND at `0x04000000`, identified as
   `EC DA 10 95`: 256 MiB data, 2 KiB pages, 64-byte OOB, 64 pages per block,
   and 2048 blocks. Read, program, erase, status, ID, CPU access, and HSDMA access
@@ -240,63 +239,11 @@ FTL tags, parses its FAT16 partition, walks the directory tree, and loads
 `kernel.bin` from inside the NAND. No separate kernel file is required for
 normal use.
 
-For the Web frontend, run:
-
-```powershell
-.\run-bbk9288s-web.cmd
-```
-
-The launcher builds `web\dist`, starts QEMU's VNC WebSocket endpoint on port
-`6081`, and serves the noVNC frontend on all local interfaces at port `8000`.
-Open `http://127.0.0.1:8000/` on this PC, or use one of the LAN URLs printed by
-the launcher on a phone or another computer. Windows Firewall must allow the
-Python HTTP server and QEMU for access from another device.
-
-The LCD accepts mouse, pen, and touch input. The on-screen D-pad and
-confirm/exit controls send the same QEMU key events as the local keyboard. The
-frontend keeps short touches and keys pressed for 180 ms so the original
-firmware's debounce and key-matrix scan paths can sample them reliably. Rapid
-touches are queued instead of discarded while that sampling window is active,
-with a 60 ms pen-up interval between queued touches. Input still travels as
-normal RFB pointer/key events through the QEMU GPIO and serial touch ADC models;
-there is no guest-memory injection or system hook.
-
 The board model treats P2.3 as the panel's active-low backlight enable. When the
 firmware raises the output through its taskbar switch or idle timeout, QEMU
 switches the reflective LCD to a dim unlit four-gray palette and leaves LCD
 VRAM intact. When the firmware lowers P2.3 again, the normal lit palette becomes
 visible immediately.
-
-The Power button in the Web header calls the emulator lifecycle API. It starts
-QEMU when the firmware has powered the process off and performs a full QEMU
-restart when it is already running. The adjacent refresh button only reconnects
-the RFB display session. The frontend polls emulator status so an automatic
-power-off is shown as `已关机` instead of an indefinite reconnect state.
-
-The speaker button starts the browser audio stream after a user gesture, as
-required by browser autoplay policies. The model captures the compressed bytes
-sent by the firmware to the board decoder. The HTTP layer resumes at exact byte
-offsets and closes a response when the capture rotates; a MediaSource pipeline
-reconnects, appends sequential MP3 data, and trims old browser buffers while
-preserving continuous decode and volume control.
-
-The `NAND 文件` tab provides directory browsing, capacity reporting, upload,
-download, new directory, rename, and recursive delete. Select
-`进入维护模式` before editing. The backend sends QMP `quit`, waits for QEMU to
-save `nand-user.raw`, extracts the FAT16 view, and stages all changes there.
-`应用并重启` patches firmware-compatible GBK short names, repacks the real
-FTL/OOB layout, and starts QEMU again. `放弃` discards the staged image and
-restarts without applying file changes. Do not edit `nand-user.raw` with an
-external tool while the launcher is running.
-
-The default WebSocket endpoint has no authentication or transport encryption,
-and the NAND API is served by the same unauthenticated HTTP endpoint. Expose
-ports `8000` and `6081` only on a trusted LAN. QMP stays bound to localhost.
-Override the ports when needed:
-
-```powershell
-.\run-bbk9288s-web.ps1 -HttpPort 8080 -WebSocketPort 6082 -QmpPort 6083
-```
 
 For a local GTK/SDL window instead, run:
 

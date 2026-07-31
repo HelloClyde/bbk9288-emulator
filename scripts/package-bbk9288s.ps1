@@ -21,20 +21,15 @@ if (-not (Test-Path -LiteralPath $qemu -PathType Leaf)) {
 if (Test-Path -LiteralPath $output) {
     throw "Output directory already exists: $output"
 }
-if (-not (Test-Path -LiteralPath (Join-Path $root "web\dist\index.html"))) {
-    throw "Build the Web frontend before packaging"
-}
-
 New-Item -ItemType Directory -Path $output | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $output "scripts") | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $output "share\keymaps") `
     -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $output "web") | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $output "runtime") | Out-Null
 
 Copy-Item -LiteralPath $qemu -Destination (Join-Path $output "qemu-system-s1c33.exe")
-Copy-Item -LiteralPath (Join-Path $root "run-bbk9288s-web.cmd") -Destination $output
-Copy-Item -LiteralPath (Join-Path $root "run-bbk9288s-web.ps1") -Destination $output
+Copy-Item -LiteralPath (Join-Path $root "run-bbk9288s.cmd") -Destination $output
+Copy-Item -LiteralPath (Join-Path $root "run-bbk9288s.ps1") -Destination $output
 Copy-Item -LiteralPath (Join-Path $root "requirements-bbk9288s.txt") -Destination $output
 Copy-Item -LiteralPath (Join-Path $root "README-9288S.md") `
     -Destination (Join-Path $output "README.md")
@@ -46,12 +41,8 @@ Copy-Item -LiteralPath (Join-Path $root "COPYING.LIB") -Destination $output
 Copy-Item -LiteralPath (Join-Path $root "docs") -Destination $output -Recurse
 Copy-Item -LiteralPath (Join-Path $root "scripts\bbk9288s_nand_image.py") `
     -Destination (Join-Path $output "scripts")
-Copy-Item -LiteralPath (Join-Path $root "scripts\bbk9288s_web_server.py") `
-    -Destination (Join-Path $output "scripts")
 Copy-Item -LiteralPath (Join-Path $root "pc-bios\keymaps\en-us") `
     -Destination (Join-Path $output "share\keymaps")
-Copy-Item -LiteralPath (Join-Path $root "web\dist") `
-    -Destination (Join-Path $output "web") -Recurse
 
 $runtimeReadme = @"
 Place this file in this directory before starting the emulator:

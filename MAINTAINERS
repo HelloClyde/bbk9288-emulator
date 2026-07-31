@@ -410,9 +410,11 @@ F: hw/s1c33/
 F: plan.md
 F: README-9288S.md
 F: README.md
+F: requirements-bbk9288.txt
 F: requirements-bbk9288s.txt
 F: run-bbk9288*
 F: run-bbk9288s*
+F: scripts/bbk9288_web_server.py
 F: scripts/bbk9288s*
 F: scripts/package-bbk9288s*
 F: scripts/publish-bbk9288s*

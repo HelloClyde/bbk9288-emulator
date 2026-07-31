@@ -4,7 +4,7 @@
 [HelloClyde/bbk9288s-qemu](https://github.com/HelloClyde/bbk9288s-qemu)
 实现的 BBK 9288 硬件模拟器。9288 和 9288S 使用相同的 Epson S1C33L05
 平台，但整机形态并不相同：9288 是 `320 × 240` 横屏、53 键、无触摸屏；
-9288S 则是 `160 × 240` 竖屏触摸机。原 9288S/Web 控制台说明保留在
+9288S 则是 `160 × 240` 竖屏触摸机。原 9288S 板级资料保留在
 [README-9288S.md](README-9288S.md)。
 
 源码仓库不包含步步高原厂固件、系统文件或 NAND 镜像。运行前请自行准备
@@ -70,7 +70,7 @@ PageUp/PageDown 和方向键也会走同一套原机矩阵。软键盘的 `Shift
 安装 NAND 文件管理依赖和 Web 依赖：
 
 ```powershell
-python -m pip install -r .\requirements-bbk9288s.txt
+python -m pip install -r .\requirements-bbk9288.txt
 Push-Location .\web
 npm ci
 Pop-Location
@@ -104,6 +104,8 @@ Pop-Location
 
 WebSocket 和 HTTP 文件管理接口默认没有认证或传输加密，只应在可信局域网
 使用。QMP 始终只监听本机。
+
+Web 前端只面向 BBK 9288，不包含 9288S 的触摸屏、六键控制或机型切换逻辑。
 
 ## 构建
 
@@ -140,7 +142,7 @@ ninja qemu-system-s1c33.exe
 已格式化的原始 NAND 为模板：
 
 ```powershell
-python -m pip install -r .\requirements-bbk9288s.txt
+python -m pip install -r .\requirements-bbk9288.txt
 python .\scripts\bbk9288s_nand_image.py install `
   .\template-nand.raw `
   C:\path\to\system-tree `
@@ -185,8 +187,8 @@ python .\scripts\bbk9288_probe.py `
 - `scripts/bbk9288-softkeyboard.ps1`：Windows 53 键软键盘。
 - `scripts/bbk9288_probe.py`、`scripts/test-bbk9288.py`：短时探针和端到端
   回归测试。
-- `web/`、`scripts/bbk9288s_web_server.py`：9288/9288S 双机型 Web
-  控制台、QEMU 生命周期、浏览器音频和 NAND 管理 API。
+- `web/`、`scripts/bbk9288_web_server.py`：9288 Web 控制台、QEMU
+  生命周期、浏览器音频和 NAND 管理 API。
 
 ## 资料依据
 

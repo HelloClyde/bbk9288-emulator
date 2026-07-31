@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-machine="bbk9288">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -10,9 +10,9 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="identity">
-          <span class="model-mark" id="model-mark">9288</span>
+          <span class="model-mark">9288</span>
           <div>
-            <h1 id="model-title">BBK 9288</h1>
+            <h1>BBK 9288</h1>
             <p>QEMU hardware emulator</p>
           </div>
         </div>
@@ -49,75 +49,19 @@
       </nav>
 
       <main class="workspace" id="emulator-view" data-view-panel="emulator">
-        <section class="display-column" id="display-column" aria-label="9288 显示屏">
+        <section class="display-column" aria-label="9288 显示屏">
           <div class="device-frame" id="device-frame">
             <div class="device-label">
               <span>BBK</span>
-              <span id="display-label">320 × 240 LCD</span>
+              <span>320 × 240 LCD</span>
             </div>
             <div class="screen-bezel">
               <div id="screen" tabindex="0" aria-label="模拟器显示屏">
                 <div class="screen-state" id="screen-state">连接模拟器</div>
-                <div class="touch-layer" id="touch-layer" aria-hidden="true"></div>
               </div>
             </div>
           </div>
         </section>
-
-        <aside class="controls controls-9288s" aria-label="9288S 设备按键">
-          <div class="control-heading">
-            <span>DEVICE KEYS</span>
-            <span class="key-line">K5 / P0</span>
-          </div>
-
-          <div class="dpad" aria-label="方向键">
-            <button class="key key-up" type="button" data-key="up" title="上" aria-label="上">
-              <i data-lucide="chevron-up"></i>
-              <kbd class="key-shortcut" data-shortcut="up">W</kbd>
-            </button>
-            <button class="key key-left" type="button" data-key="left" title="左" aria-label="左">
-              <i data-lucide="chevron-left"></i>
-              <kbd class="key-shortcut" data-shortcut="left">A</kbd>
-            </button>
-            <span class="dpad-center" aria-hidden="true"></span>
-            <button class="key key-right" type="button" data-key="right" title="右" aria-label="右">
-              <i data-lucide="chevron-right"></i>
-              <kbd class="key-shortcut" data-shortcut="right">D</kbd>
-            </button>
-            <button class="key key-down" type="button" data-key="down" title="下" aria-label="下">
-              <i data-lucide="chevron-down"></i>
-              <kbd class="key-shortcut" data-shortcut="down">S</kbd>
-            </button>
-          </div>
-
-          <div class="action-keys">
-            <button class="action-key exit-key" type="button" data-key="escape">
-              <i data-lucide="corner-up-left"></i>
-              <span>退出</span>
-              <kbd data-shortcut="escape">K</kbd>
-            </button>
-            <button class="action-key confirm-key" type="button" data-key="enter">
-              <i data-lucide="circle-check"></i>
-              <span>确定</span>
-              <kbd data-shortcut="enter">J</kbd>
-            </button>
-          </div>
-
-          <div class="audio-control">
-            <button class="icon-button audio-button" id="audio-toggle" type="button" title="启用声音" aria-label="启用声音" data-enabled="false" data-muted="false">
-              <i class="volume-on" data-lucide="volume-2"></i>
-              <i class="volume-off" data-lucide="volume-x"></i>
-            </button>
-            <input id="audio-volume" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="音量" />
-            <output id="audio-volume-value" for="audio-volume">80%</output>
-          </div>
-
-          <div class="hardware-state">
-            <div><span>Display</span><strong id="display-size">160 x 240</strong></div>
-            <div><span>Depth</span><strong>2 / 4 bpp</strong></div>
-            <div><span>Input</span><strong id="input-type">Touch + keys</strong></div>
-          </div>
-        </aside>
 
         <section class="keyboard-9288" id="keyboard-9288" aria-label="BBK 9288 原机 53 键键盘">
           <header class="keyboard-heading">
@@ -125,7 +69,17 @@
               <strong>BBK 9288 原机键盘</strong>
               <span>8 × 7 MATRIX · 53 KEYS</span>
             </div>
-            <output id="keyboard-state">点击按键或直接使用电脑键盘</output>
+            <div class="keyboard-tools">
+              <output id="keyboard-state">点击按键或直接使用电脑键盘</output>
+              <div class="audio-control">
+                <button class="icon-button audio-button" id="audio-toggle" type="button" title="启用声音" aria-label="启用声音" data-enabled="false" data-muted="false">
+                  <i class="volume-on" data-lucide="volume-2"></i>
+                  <i class="volume-off" data-lucide="volume-x"></i>
+                </button>
+                <input id="audio-volume" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="音量" />
+                <output id="audio-volume-value" for="audio-volume">80%</output>
+              </div>
+            </div>
           </header>
           <div class="keyboard-scroll">
             <div class="keyboard-deck" id="keyboard-deck"></div>
@@ -228,7 +182,7 @@
             <div class="setting-row">
               <span class="setting-label">
                 <strong>USB 连接</strong>
-                <small id="usb-description">模拟设备的 USB 供电检测</small>
+                <small>模拟 9288 的 USB 供电检测</small>
               </span>
               <div class="setting-control">
                 <output id="usb-state" for="usb-connected">已连接</output>
@@ -241,7 +195,7 @@
             </div>
           </section>
 
-          <section class="settings-section controls-9288" aria-labelledby="matrix-settings-title">
+          <section class="settings-section" aria-labelledby="matrix-settings-title">
             <div class="settings-section-heading">
               <i data-lucide="keyboard"></i>
               <h3 id="matrix-settings-title">9288 键盘矩阵</h3>
@@ -252,43 +206,6 @@
             </p>
           </section>
 
-          <section class="settings-section controls-9288s" aria-labelledby="keymap-settings-title">
-            <div class="settings-section-heading">
-              <i data-lucide="keyboard"></i>
-              <h3 id="keymap-settings-title">按键映射</h3>
-              <button class="command-button secondary-command settings-reset" id="keymap-reset" type="button">
-                <i data-lucide="undo-2"></i>
-                <span>恢复默认</span>
-              </button>
-            </div>
-            <div class="keymap-list" aria-label="按键映射">
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="chevron-up"></i><strong>上</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="up"><kbd>W</kbd></button>
-              </div>
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="chevron-down"></i><strong>下</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="down"><kbd>S</kbd></button>
-              </div>
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="chevron-left"></i><strong>左</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="left"><kbd>A</kbd></button>
-              </div>
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="chevron-right"></i><strong>右</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="right"><kbd>D</kbd></button>
-              </div>
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="circle-check"></i><strong>确定</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="enter"><kbd>J</kbd></button>
-              </div>
-              <div class="keymap-row">
-                <span class="keymap-action"><i data-lucide="corner-up-left"></i><strong>退出</strong></span>
-                <button class="keymap-binding" type="button" data-map-action="escape"><kbd>K</kbd></button>
-              </div>
-            </div>
-            <p class="keymap-capture" id="keymap-capture" hidden role="status" aria-live="polite"></p>
-          </section>
         </div>
       </main>
 
