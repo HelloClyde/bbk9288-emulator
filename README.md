@@ -49,35 +49,10 @@
 图标。已实测软键盘“确定”可关闭系统提示，方向键可移动日历选中框。
 NAND 是可写的，并在运行过程中增量保存。
 
-## 直接运行
+## 快速开始
 
-源码构建完成后运行：
-
-```powershell
-.\run-bbk9288.ps1 -Nand .\runtime\nand-user.raw
-```
-
-如果使用 Windows 便携发布包，也可以直接双击：
-
-```text
-启动BBK9288.cmd
-```
-
-源码目录启动方式默认在 `C:\msys64\ucrt64\bin` 查找 SDL2 和构建依赖。
-便携包需要包含构建产物 `bbk9288.exe` 及其运行库。
-
-启动后会同时出现 320 × 240 模拟器窗口和“BBK 9288 — 53 键软键盘”。
-直接点击软键盘即可操作；电脑键盘上的数字、字母、Enter、Delete、
-PageUp/PageDown 和方向键也会走同一套原机矩阵。软键盘的 `Shift` 是锁定键：
-先点 `Shift`，再点一个字母或数字即可发送组合键。
-
-启动器会优先使用同目录或 `PATH` 中的 `ffplay.exe` 播放声音，也可通过
-`-AudioPlayer <路径>` 指定，或用 `-NoAudio` 禁用。`ffplay` 本身不随源码
-仓库分发。
-
-## Web 前端
-
-安装 NAND 文件管理依赖和 Web 依赖：
+准备好已构建的 `bbk9288.exe`（或 `_build\qemu-system-s1c33.exe`），并将
+有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`。首次运行先安装依赖：
 
 ```powershell
 python -m pip install -r .\requirements-bbk9288.txt
@@ -86,15 +61,17 @@ npm ci
 Pop-Location
 ```
 
-启动 9288 Web 控制台：
+启动 Web 控制台：
 
 ```powershell
 .\run-bbk9288-web.ps1 -Nand .\runtime\nand-user.raw
 ```
 
-也可以双击 `run-bbk9288-web.cmd`。默认页面为
-`http://127.0.0.1:8000/`，启动器会同时输出可供同一局域网手机或电脑访问
-的地址。Web 前端包括：
+也可以在 NAND 位于默认路径时双击 `run-bbk9288-web.cmd`。浏览器访问
+`http://127.0.0.1:8000/`；启动器还会输出可供同一局域网手机或电脑访问的
+地址。网页中的扬声器按钮用于开启声音，按 `Ctrl+C` 可停止模拟器。
+
+## Web 前端功能
 
 - 320 × 240 横屏 noVNC 显示，支持像素级缩放和全屏。
 - 与原机布局一致的 53 键面板；电脑键盘也可直接输入。
