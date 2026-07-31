@@ -1,11 +1,7 @@
 # 步步高 BBK 9288 QEMU 模拟器
 
-这是基于 QEMU 11.0 和
-[HelloClyde/bbk9288s-qemu](https://github.com/HelloClyde/bbk9288s-qemu)
-实现的 BBK 9288 硬件模拟器。9288 和 9288S 使用相同的 Epson S1C33L05
-平台，但整机形态并不相同：9288 是 `320 × 240` 横屏、53 键、无触摸屏；
-9288S 则是 `160 × 240` 竖屏触摸机。原 9288S 板级资料保留在
-[README-9288S.md](README-9288S.md)。
+这是基于 QEMU 11.0 实现的 BBK 9288 硬件模拟器，模拟 Epson S1C33L05
+处理器、`320 × 240` 横屏、53 键矩阵、NAND、音频及相关板级硬件。
 
 源码仓库不包含步步高原厂固件、系统文件或 NAND 镜像。运行前请自行准备
 有权使用的 9288 V1.5 NAND；Windows 便携发布包也应将这些文件作为独立资产
@@ -92,7 +88,7 @@ Pop-Location
 WebSocket 和 HTTP 文件管理接口默认没有认证或传输加密，只应在可信局域网
 使用。QMP 始终只监听本机。
 
-Web 前端只面向 BBK 9288，不包含 9288S 的触摸屏、六键控制或机型切换逻辑。
+Web 前端固定使用 BBK 9288 机型，不提供机型切换逻辑。
 
 ## 构建
 
@@ -121,26 +117,13 @@ ninja qemu-system-s1c33.exe
 .\_build\qemu-system-s1c33.exe -machine help
 ```
 
-输出中应同时包含 `bbk9288` 和 `bbk9288s`。
+输出中应包含 `bbk9288`。
 
 ## 生成 9288 NAND
 
-`bbk9288s_nand_image.py` 现在允许安装到 FAT 根目录，并可先清空目标。以一份
-已格式化的原始 NAND 为模板：
-
-```powershell
-python -m pip install -r .\requirements-bbk9288.txt
-python .\scripts\bbk9288s_nand_image.py install `
-  .\template-nand.raw `
-  C:\path\to\system-tree `
-  --output .\runtime\nand-user.raw `
-  --flat .\runtime\nand-user.fat.img `
-  --target / `
-  --replace-target
-```
-
-脚本会重新生成 GBK 兼容的 FAT 短文件名，并核验
-`/系统/数据/HZK_LIB.BIN`。
+仓库内的 NAND 工具支持 FTL/FAT16 提取、安装和重新打包，可以把系统文件树
+安装到 FAT 根目录，并重新生成固件兼容的 GBK 短文件名。详细命令和镜像结构
+参见 [技术笔记](docs/technical-notes.md)。
 
 ## 启动探针
 
@@ -165,12 +148,26 @@ python .\scripts\bbk9288_probe.py `
   -AudioPlayer <ffplay.exe路径>
 ```
 
+## CI 与发布
+
+提交到 `main`、创建拉取请求或手动运行工作流时，GitHub Actions 会构建并
+冒烟测试 Windows x64 Web 发布包，构建产物可在对应的 Actions 运行页面下载。
+
+推送以 `v` 开头的 tag 会在构建通过后自动创建 GitHub Release：
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Release 包含 ZIP 和 SHA-256 校验文件，不包含原厂固件、系统文件或 NAND
+镜像。工作流会检查发布包，发现这些文件或测试私钥时立即失败。
+
 ## 代码结构
 
-- `hw/s1c33/bbk9288s.c`：9288/9288S 板级设备、LCD、NAND、音频、定时器、
-  DMA 和输入模型。
+- `hw/s1c33/`：9288 板级设备、LCD、NAND、音频、定时器、DMA 和输入模型。
 - `target/s1c33/`：Epson S1C33 CPU 翻译、指令 helper 和反汇编。
-- `scripts/bbk9288s_nand_image.py`：NAND FTL/FAT16 提取、安装与重新打包。
+- `scripts/`：NAND FTL/FAT16 工具、启动探针和端到端回归测试。
 - `scripts/bbk9288-softkeyboard.ps1`：Windows 53 键软键盘。
 - `scripts/bbk9288_probe.py`、`scripts/test-bbk9288.py`：短时探针和端到端
   回归测试。
@@ -183,9 +180,6 @@ python .\scripts\bbk9288_probe.py `
   外观页确认横屏键盘机且没有触摸层。
 - [Epson S1C33L05 Technical Manual](https://www.epson.jp/prod/semicon/pdf/id000446.pdf)：
   CPU、40 KiB IVRAM、LCDC、NAND、串行接口及寄存器定义。
-- [BBK 9288S QEMU 参考实现](https://github.com/HelloClyde/bbk9288s-qemu)：
-  S1C33 CPU、NAND FTL、定时器、DMA 和 LCDC 的基础模型。
-
 ## 当前限制
 
 - USB 和少量未被 9288 V1.5 固件当前路径使用的板级扩展寄存器仍是实验性模型。

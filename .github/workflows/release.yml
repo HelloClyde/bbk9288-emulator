@@ -1,18 +1,20 @@
-name: Build and release
+name: Build Windows package
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
+  pull_request:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Existing or new release tag"
-        required: true
-        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: windows-package-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 jobs:
   windows-x64:
@@ -26,12 +28,12 @@ jobs:
         run: git config --global core.autocrlf input
 
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: web/package-lock.json
 
@@ -78,61 +80,57 @@ jobs:
         working-directory: _build
         run: ninja qemu-system-s1c33.exe
 
-      - name: Package Windows build
+      - name: Package Windows Web build
         run: |
-          $tag = if ("${{ github.event_name }}" -eq "push") {
+          $version = if ("${{ github.ref_type }}" -eq "tag") {
             "${{ github.ref_name }}"
           } else {
-            "${{ inputs.release_tag }}"
+            "ci-${{ github.run_number }}"
           }
+          $name = "bbk9288-emulator-$version-windows-x64"
           New-Item -ItemType Directory -Force dist | Out-Null
-          $name = "bbk9288s-qemu-$tag-windows-x64"
-          ./scripts/package-bbk9288s.ps1 `
+          ./scripts/package-bbk9288.ps1 `
             -QemuPath "_build/qemu-system-s1c33.exe" `
+            -WebDist "web/dist" `
             -OutputDir "dist/$name" `
             -ArchivePath "dist/$name.zip" `
             -MsysBin "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin"
-          ./scripts/smoke-test-bbk9288s-package.ps1 `
+          ./scripts/smoke-test-bbk9288-package.ps1 `
             -PackageDir "dist/$name"
           Get-FileHash "dist/$name.zip" -Algorithm SHA256 |
             ForEach-Object {
               "$($_.Hash.ToLowerInvariant())  $name.zip"
             } | Set-Content "dist/$name.zip.sha256" -Encoding ascii
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v7
         with:
-          name: bbk9288s-qemu-windows-x64
+          name: bbk9288-emulator-windows-x64
           path: |
             dist/*.zip
             dist/*.sha256
           if-no-files-found: error
+          retention-days: 14
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: windows-x64
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Download Windows package
+        uses: actions/download-artifact@v8
         with:
-          name: bbk9288s-qemu-windows-x64
+          name: bbk9288-emulator-windows-x64
           path: dist
 
-      - name: Include the test NAND asset when available
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release download nand-test-image \
-            --repo "$GITHUB_REPOSITORY" \
-            --pattern "bbk9288s-test-nand.zip*" \
-            --dir dist || true
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
           generate_release_notes: true
-          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          fail_on_unmatched_files: true
           files: |
             dist/*.zip
             dist/*.sha256
