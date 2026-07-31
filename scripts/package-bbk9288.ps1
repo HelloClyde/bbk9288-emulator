@@ -6,6 +6,9 @@ param(
     [string]$WebDist,
 
     [Parameter(Mandatory)]
+    [string]$PythonRuntime,
+
+    [Parameter(Mandatory)]
     [string]$OutputDir,
 
     [string]$ArchivePath,
@@ -17,9 +20,14 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $qemu = [System.IO.Path]::GetFullPath($QemuPath)
 $web = [System.IO.Path]::GetFullPath($WebDist)
+$pythonRuntime = [System.IO.Path]::GetFullPath($PythonRuntime)
 $output = [System.IO.Path]::GetFullPath($OutputDir)
 
-foreach ($path in @($qemu, (Join-Path $web "index.html"))) {
+foreach ($path in @(
+    $qemu,
+    (Join-Path $web "index.html"),
+    (Join-Path $pythonRuntime "python.exe")
+)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Package input is missing: $path"
     }
@@ -39,6 +47,8 @@ Copy-Item -LiteralPath $qemu `
     -Destination (Join-Path $output "qemu-system-s1c33.exe")
 Copy-Item -LiteralPath $web -Destination (Join-Path $output "web\dist") `
     -Recurse
+Copy-Item -LiteralPath $pythonRuntime `
+    -Destination (Join-Path $output "python") -Recurse
 Copy-Item -LiteralPath (Join-Path $root "run-bbk9288-web.cmd") `
     -Destination $output
 Copy-Item -LiteralPath (Join-Path $root "run-bbk9288-web.ps1") `

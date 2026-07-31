@@ -18,6 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 $env:PYTHONUTF8 = "1"
+$env:PYTHONNOUSERSITE = "1"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runtimeBin = "C:\msys64\ucrt64\bin"
 $qemuCandidates = @(
@@ -60,7 +61,12 @@ $nandTool = Join-Path $root "scripts\bbk9288s_nand_image.py"
 $webServer = Join-Path $root "scripts\bbk9288_web_server.py"
 $webRoot = Join-Path $root "web"
 $webDist = Join-Path $webRoot "dist"
-$python = (Get-Command python -ErrorAction Stop).Source
+$bundledPython = Join-Path $root "python\python.exe"
+$python = if (Test-Path -LiteralPath $bundledPython -PathType Leaf) {
+    $bundledPython
+} else {
+    (Get-Command python -ErrorAction Stop).Source
+}
 
 foreach ($path in @($qemu, $Nand, $nandTool, $webServer)) {
     if (-not (Test-Path -LiteralPath $path)) {

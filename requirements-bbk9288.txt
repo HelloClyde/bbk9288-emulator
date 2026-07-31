@@ -1,1 +1,5 @@
 pyfatfs==1.1.0
+fs==2.4.16
+appdirs==1.4.4
+six==1.17.0
+setuptools==80.9.0

@@ -48,14 +48,11 @@ NAND 是可写的，并在运行过程中增量保存。
 ## 快速开始
 
 从 [Releases](https://github.com/HelloClyde/bbk9288-emulator/releases) 下载并
-解压 Windows x64 发布包，安装 Python 依赖：
+解压 Windows x64 发布包。发布包已包含 Python 运行时、Python 依赖、Web
+静态资源和 QEMU 运行库，不需要另外安装 Python、npm 或 `ffplay`。
 
-```powershell
-python -m pip install -r .\requirements-bbk9288.txt
-```
-
-将有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`，然后双击
-`run-bbk9288-web.cmd`，或在 PowerShell 中运行：
+将有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`，双击
+`run-bbk9288-web.cmd` 即可启动。也可以在 PowerShell 中运行：
 
 ```powershell
 .\run-bbk9288-web.ps1
@@ -64,6 +61,7 @@ python -m pip install -r .\requirements-bbk9288.txt
 从源码运行时，需要先构建 `qemu-system-s1c33.exe` 并安装 Web 依赖：
 
 ```powershell
+python -m pip install -r .\requirements-bbk9288.txt
 Push-Location .\web
 npm ci
 Pop-Location
@@ -166,8 +164,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Release 包含 ZIP 和 SHA-256 校验文件，不包含原厂固件、系统文件或 NAND
-镜像。工作流会检查发布包，发现这些文件或测试私钥时立即失败。
+Release 包含 ZIP 和 SHA-256 校验文件；ZIP 内置 Python 运行时及全部 Web
+运行依赖，但不包含原厂固件、系统文件或 NAND 镜像。工作流会检查发布包，
+发现这些文件或测试私钥时立即失败。
 
 ## 代码结构
 

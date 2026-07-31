@@ -9,11 +9,13 @@ param(
 $ErrorActionPreference = "Stop"
 $package = [System.IO.Path]::GetFullPath($PackageDir)
 $qemu = Join-Path $package "qemu-system-s1c33.exe"
+$python = Join-Path $package "python\python.exe"
 $dataDir = Join-Path $package "share"
 $stderr = Join-Path $package "package-smoke.stderr.log"
 $port = 5900 + $VncDisplay
 $required = @(
     $qemu,
+    $python,
     (Join-Path $package "run-bbk9288-web.cmd"),
     (Join-Path $package "run-bbk9288-web.ps1"),
     (Join-Path $package "requirements-bbk9288.txt"),
@@ -51,11 +53,22 @@ if ($LASTEXITCODE -ne 0 -or $machineText -notmatch "(?m)^bbk9288\s") {
     throw "Packaged QEMU does not expose the bbk9288 machine"
 }
 
-& python -m py_compile `
+& $python -c "import pyfatfs, fs"
+if ($LASTEXITCODE -ne 0) {
+    throw "Bundled Python dependencies failed import validation"
+}
+
+& $python -m py_compile `
     (Join-Path $package "scripts\bbk9288_web_server.py") `
     (Join-Path $package "scripts\bbk9288s_nand_image.py")
 if ($LASTEXITCODE -ne 0) {
     throw "Packaged Python scripts failed syntax validation"
+}
+
+& $python (Join-Path $package "scripts\bbk9288_web_server.py") --help `
+    *> $null
+if ($LASTEXITCODE -ne 0) {
+    throw "Bundled Web server failed startup import validation"
 }
 
 if (Get-NetTCPConnection -State Listen -LocalPort $port `
