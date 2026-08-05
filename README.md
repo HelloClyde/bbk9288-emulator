@@ -47,8 +47,8 @@ NAND 是可写的，并在运行过程中增量保存。
 
 ## 快速开始
 
-1. 从 [v9288-0.1.1 Release](https://github.com/HelloClyde/bbk9288-emulator/releases/tag/v9288-0.1.1)
-   下载 `bbk9288-emulator-v9288-0.1.1-windows-x64.zip` 和
+1. 从 [v9288-0.1.2 Release](https://github.com/HelloClyde/bbk9288-emulator/releases/tag/v9288-0.1.2)
+   下载 `bbk9288-emulator-v9288-0.1.2-windows-x64.zip` 和
    `bbk9288-v1.5-nand.zip`。
 2. 先解压模拟器 ZIP，再把 NAND ZIP 解压到同一个目录；合并其中的
    `runtime` 文件夹即可，不需要改名或移动文件。

@@ -1891,13 +1891,17 @@ static unsigned bbk9288_keyboard_scan_code_for_qcode(int qcode)
     /*
      * Three 9288-only panel keys occupy positions that have no equivalent in
      * QEMU's generic key-code table.  V1.5 uses 0x78 for its input-method key;
-     * Shift and Help are consumed as raw modifier/function positions.
+     * Shift and Exit are consumed as raw modifier/function positions.  F12 is
+     * an otherwise-unused, VNC-safe transport alias for Exit; QEMU Help is
+     * retained as a monitor-side alias.  The physical 9288 Help key is the
+     * F11 entry (matrix ID 38) in the table above.
      */
     switch (qcode) {
     case Q_KEY_CODE_MENU:
         return 30;
     case Q_KEY_CODE_SHIFT:
         return 39;
+    case Q_KEY_CODE_F12:
     case Q_KEY_CODE_HELP:
         return 47;
     default:
