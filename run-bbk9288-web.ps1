@@ -31,7 +31,7 @@ $qemu = $qemuCandidates |
     Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
     Select-Object -First 1
 if ([string]::IsNullOrWhiteSpace($qemu)) {
-    throw "找不到 S1C33 QEMU 可执行文件。"
+    throw "S1C33 QEMU executable not found."
 }
 if (-not $RuntimeDir) {
     $RuntimeDir = if ($env:BBK9288_RUNTIME_DIR) {
@@ -47,14 +47,14 @@ if (-not $Nand) {
         (Join-Path $root "nand-user.raw"),
         (Join-Path (
             Split-Path -Parent $root
-        ) "BBK9288模拟器\nand-user.raw")
+        ) "BBK9288-emulator\nand-user.raw")
     )
     $Nand = $nandCandidates |
         Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
         Select-Object -First 1
 }
 if ([string]::IsNullOrWhiteSpace($Nand)) {
-    throw "找不到 NAND 镜像；请用 -Nand 指定 nand-user.raw。"
+    throw "NAND image not found; specify nand-user.raw with -Nand."
 }
 $Nand = [System.IO.Path]::GetFullPath($Nand)
 $nandTool = Join-Path $root "scripts\bbk9288s_nand_image.py"

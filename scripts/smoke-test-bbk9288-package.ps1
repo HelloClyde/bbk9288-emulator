@@ -32,6 +32,16 @@ foreach ($path in $required) {
     }
 }
 
+# Windows PowerShell 5.1 treats UTF-8 files without a BOM as the active ANSI
+# code page. Keep the CMD entry point's PowerShell script ASCII-only so it is
+# parsed identically on every supported Windows locale.
+$launcher = Join-Path $package "run-bbk9288-web.ps1"
+$nonAsciiLauncherBytes = [System.IO.File]::ReadAllBytes($launcher) |
+    Where-Object { $_ -gt 0x7f }
+if ($nonAsciiLauncherBytes) {
+    throw "Packaged Web launcher must remain ASCII for Windows PowerShell 5.1"
+}
+
 $forbiddenNames = @("id_rsa", "kernel.bin", "nand-user.raw")
 $forbidden = Get-ChildItem -LiteralPath $package -Recurse -File |
     Where-Object {
