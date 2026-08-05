@@ -47,29 +47,16 @@ NAND 是可写的，并在运行过程中增量保存。
 
 ## 快速开始
 
-从 [Releases](https://github.com/HelloClyde/bbk9288-emulator/releases) 下载并
-解压 Windows x64 发布包。发布包已包含 Python 运行时、Python 依赖、Web
-静态资源和 QEMU 运行库，不需要另外安装 Python、npm 或 `ffplay`。
+1. 从 [v9288-0.1.0 Release](https://github.com/HelloClyde/bbk9288-emulator/releases/tag/v9288-0.1.0)
+   下载 `bbk9288-emulator-v9288-0.1.0-windows-x64.zip` 和
+   `bbk9288-v1.5-nand.zip`。
+2. 先解压模拟器 ZIP，再把 NAND ZIP 解压到同一个目录；合并其中的
+   `runtime` 文件夹即可，不需要改名或移动文件。
+3. 双击 `run-bbk9288-web.cmd`。启动后浏览器访问
+   `http://127.0.0.1:8000/`，点击网页中的扬声器按钮可开启声音。
 
-将有权使用的 9288 NAND 镜像放到 `runtime\nand-user.raw`，双击
-`run-bbk9288-web.cmd` 即可启动。也可以在 PowerShell 中运行：
-
-```powershell
-.\run-bbk9288-web.ps1
-```
-
-从源码运行时，需要先构建 `qemu-system-s1c33.exe` 并安装 Web 依赖：
-
-```powershell
-python -m pip install -r .\requirements-bbk9288.txt
-Push-Location .\web
-npm ci
-Pop-Location
-.\run-bbk9288-web.ps1 -Nand .\runtime\nand-user.raw
-```
-
-浏览器访问 `http://127.0.0.1:8000/`；启动器还会输出可供同一局域网手机或
-电脑访问的地址。网页中的扬声器按钮用于开启声音，按 `Ctrl+C` 可停止模拟器。
+发布包已包含 Python 运行时、Python 依赖、Web 静态资源、QEMU 运行库和
+`ffplay`，不需要安装 Python、npm 或其他依赖。关闭启动命令窗口即可停止模拟器。
 
 ## Web 前端功能
 
@@ -164,9 +151,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Release 包含 ZIP 和 SHA-256 校验文件；ZIP 内置 Python 运行时及全部 Web
-运行依赖，但不包含原厂固件、系统文件或 NAND 镜像。工作流会检查发布包，
-发现这些文件或测试私钥时立即失败。
+Release 包含模拟器 ZIP、9288 V1.5 NAND ZIP 及各自的 SHA-256 校验文件。
+模拟器 ZIP 内置 Python 运行时及全部 Web 运行依赖；NAND 作为独立资产发布，
+不写入源码历史，也不会被打入自动构建的模拟器 ZIP。工作流发现模拟器 ZIP
+夹带 NAND、固件或测试私钥时会立即失败。
 
 ## 代码结构
 
